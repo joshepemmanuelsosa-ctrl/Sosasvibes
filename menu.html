@@ -133,6 +133,11 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 /* Minimizar + Cancelar dentro del modal */
 .sm-topbar{display:flex;justify-content:flex-end;margin-bottom:-6px}
 .sm-minimize{background:none;border:none;color:var(--muted);font:600 11px 'Inter',sans-serif;cursor:pointer;padding:6px 4px}
+.bill-btn{width:100%;margin-top:14px;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--beer),#E8890C);color:#0A0A00;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;cursor:pointer}
+.bill-btn:disabled{opacity:.6}
+.bill-note{font-size:10.5px;color:var(--muted);text-align:center;margin-top:6px}
+.bill-requested-msg{display:none;margin-top:14px;background:rgba(255,194,51,.08);border:1.5px solid rgba(255,194,51,.35);border-radius:14px;padding:12px;text-align:center;color:var(--beer);font-weight:700;font-size:13px}
+.bill-requested-msg.show{display:block}
 .sm-cancel{width:100%;margin-top:10px;padding:11px;background:transparent;border:1.5px solid rgba(255,30,30,.35);border-radius:12px;color:var(--red);font:700 12px 'Inter',sans-serif;cursor:pointer}
 .sm-cancel:active{background:rgba(255,30,30,.1)}
 .sm-pay-required{font-size:11px;color:var(--beer);text-align:center;margin-top:8px;padding:8px;background:rgba(255,194,51,.08);border-radius:10px;border:1px solid rgba(255,194,51,.25)}
@@ -624,8 +629,15 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <button class="sm-more" id="smMoreBtn" onclick="orderMore()">+ Agregar más al pedido</button>
     <button class="sm-cancel" id="smCancelBtn" onclick="cancelOrderClient()" style="display:none">✕ Cancelar pedido</button>
 
+    <!-- PEDIR CUENTA -->
+    <div id="billBlock">
+      <button class="bill-btn" id="billBtn" onclick="requestBillClient()">🧾 Pedir mi cuenta</button>
+      <div class="bill-note">Puedes seguir agregando a tu pedido hasta que pidas tu cuenta</div>
+    </div>
+    <div class="bill-requested-msg" id="billRequestedMsg">🧾 Cuenta solicitada — el personal va en camino</div>
+
     <!-- PAGO -->
-    <div id="payBlock">
+    <div id="payBlock" style="display:none">
       <div class="sm-pay-required" id="payRequiredMsg" style="display:none">⚠️ Aún no has elegido cómo vas a pagar</div>
       <div class="sm-pay-q">💳 ¿Cómo vas a pagar?</div>
       <div class="sm-pay-grid">
@@ -740,7 +752,7 @@ function getProductArt(p){
 
 // ---- STATE ----
 let products = {}, cart = {}, tables = [], productsById = {};
-let selTable = null, currentOrderId = null, isAddingToExisting = false, currentOrderStatus = null;
+let selTable = null, currentOrderId = null, isAddingToExisting = false, currentOrderStatus = null, billRequested = false;
 let selectedTable = null;
 
 async function showTableSelect(){
@@ -1117,6 +1129,7 @@ function subscribeToOrder(oid){
   sb.channel('order-'+oid)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders',filter:`id=eq.${oid}`},
     payload=>{
+      if(payload.new.bill_requested && !billRequested){ applyBillRequestedUI(); }
       updateStatusUI(payload.new.status);
       if(payload.new.payment_status==='pagado'){ lockOrderAsPaid(); }
     })
@@ -1134,27 +1147,53 @@ function updateStatusUI(status){
     else if(i===idx) d.className='ss-dot active';
     else d.className='ss-dot';
   });
-  // Controlar botón "Agregar más" según status
+  // Cuenta abierta: "Agregar más" disponible SIEMPRE hasta que se pida la cuenta
   const moreBtn=document.getElementById('smMoreBtn');
   const readyMsg=document.getElementById('smReadyMsg');
   if(status==='listo'||status==='entregado'){
-    if(moreBtn) moreBtn.style.display='none';
     if(readyMsg) readyMsg.style.display='block';
     const box=document.querySelector('.sm-box');
     if(box){ box.style.borderColor='rgba(182,255,26,.5)'; box.style.boxShadow='0 0 30px rgba(182,255,26,.15)'; }
   } else {
-    if(moreBtn) moreBtn.style.display='';
     if(readyMsg) readyMsg.style.display='none';
   }
+  if(moreBtn) moreBtn.style.display = billRequested ? 'none' : '';
   // Cancelar: solo disponible mientras el pedido sigue en 'nuevo'
   const cancelBtn=document.getElementById('smCancelBtn');
-  if(cancelBtn) cancelBtn.style.display = (status==='nuevo') ? 'block' : 'none';
-  // Una vez 'listo' o 'entregado': ya no se modifica nada, solo pagar
-  if((status==='listo'||status==='entregado') && isAddingToExisting){
-    cancelExtras();
-    showMenuToast('🍺 Tu pedido ya está listo — ya no se pueden agregar productos');
-  }
+  if(cancelBtn) cancelBtn.style.display = (status==='nuevo' && !billRequested) ? 'block' : 'none';
   syncOrderFab(status);
+}
+
+// ---- PEDIR LA CUENTA ----
+function applyBillRequestedUI(){
+  billRequested=true;
+  document.getElementById('billBlock').style.display='none';
+  document.getElementById('billRequestedMsg').classList.add('show');
+  document.getElementById('payBlock').style.display='block';
+  const req=document.getElementById('payRequiredMsg');
+  if(req && !payChosen) req.style.display='block';
+  const moreBtn=document.getElementById('smMoreBtn');
+  if(moreBtn) moreBtn.style.display='none';
+  const cancelBtn=document.getElementById('smCancelBtn');
+  if(cancelBtn) cancelBtn.style.display='none';
+  if(isAddingToExisting) cancelExtras();
+  syncPayAlert();
+}
+async function requestBillClient(){
+  if(!currentOrderId || billRequested) return;
+  if(!confirm('¿Pedir tu cuenta? Ya no podrás agregar más productos después.')) return;
+  const btn=document.getElementById('billBtn');
+  btn.disabled=true; btn.textContent='Solicitando...';
+  try{
+    const {error}=await sb.rpc('request_bill',{p_order_id:currentOrderId});
+    if(error) throw error;
+    applyBillRequestedUI();
+    showMenuToast('🧾 Cuenta solicitada');
+  }catch(e){
+    console.error('requestBillClient:',e);
+    showMenuToast('❌ '+(e.message||'No se pudo pedir la cuenta'));
+  }
+  btn.disabled=false; btn.textContent='🧾 Pedir mi cuenta';
 }
 
 // ---- BOTÓN FLOTANTE "MI PEDIDO" ----
@@ -1180,7 +1219,7 @@ function syncPayAlert(){
   const fab=document.getElementById('myOrderFab');
   if(!fab) return;
   document.getElementById('fabPayAlert')?.remove();
-  if(!payChosen && currentOrderId && (currentOrderStatus==='nuevo'||currentOrderStatus==='preparando')){
+  if(!payChosen && currentOrderId && billRequested && !orderLockedPaid){
     const dot=document.createElement('span');
     dot.id='fabPayAlert'; dot.className='fab-pay-alert';
     fab.style.position='fixed';
@@ -1443,7 +1482,13 @@ function resetPayUI(){
   const msg=document.getElementById('payConfirmMsg');
   if(msg){ msg.classList.remove('show'); msg.textContent=''; }
   const req=document.getElementById('payRequiredMsg');
-  if(req) req.style.display='block';
+  if(req) req.style.display='none';
+  billRequested=false;
+  document.getElementById('billBlock').style.display='block';
+  const bBtn=document.getElementById('billBtn');
+  if(bBtn){ bBtn.disabled=false; bBtn.textContent='🧾 Pedir mi cuenta'; }
+  document.getElementById('billRequestedMsg').classList.remove('show');
+  document.getElementById('payBlock').style.display='none';
   document.getElementById('tipBlock')?.classList.remove('show');
   document.getElementById('ticketBlock')?.classList.remove('show');
   document.getElementById('paidBanner')?.classList.remove('show');

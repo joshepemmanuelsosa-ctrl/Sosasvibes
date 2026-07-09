@@ -103,6 +103,8 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .oci-tag.limon{background:rgba(255,235,100,.1);color:#FFE566;border:1px solid rgba(255,235,100,.25)}
 .oci-tag.clamato{background:rgba(255,99,71,.14);color:#FF8B6B;border:1px solid rgba(255,99,71,.3)}
 .oci-tag.promo{background:rgba(255,140,0,.15);color:#FF9D33;border:1px solid rgba(255,140,0,.4)}
+.bill-badge{display:inline-block;font-size:10px;font-weight:900;color:#0A0A00;background:var(--beer);border-radius:20px;padding:3px 10px;margin-left:6px;animation:billpulse 1s ease-in-out infinite}
+@keyframes billpulse{0%,100%{opacity:1}50%{opacity:.55}}
 .promo-note-tag{display:inline-block;font-size:10px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.12);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px;margin-top:4px}
 .pay-intent{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;margin-top:5px}
 .pay-intent.efectivo{background:rgba(74,222,128,.14);color:#4ADE80;border:1px solid rgba(74,222,128,.35)}
@@ -468,6 +470,11 @@ function subscribeOrders(){
             if(old.status!=='cancelado' && payload.new.status==='cancelado'){
               showToast('🚫 #'+orders[idx].order_number+' · '+orders[idx].table_label+' fue cancelada por el cliente');
             }
+            if(!old.bill_requested && payload.new.bill_requested){
+              playExtraAlert();
+              showToast('🧾 '+orders[idx].table_label+' PIDE SU CUENTA · #'+orders[idx].order_number);
+              showBellBadge();
+            }
           }
         } else if(payload.eventType==='DELETE'){
           orders=orders.filter(o=>o.id!==payload.old.id);
@@ -523,6 +530,7 @@ function orderCardHTML(o){
   const since=timeSince(o.created_at);
   const hasExtras=items.some(i=>i.is_extra);
   const extrasBadge=o.extras_pending?'<span class="extras-badge">⚡ EXTRAS</span>':'';
+  const billBadge=(o.bill_requested&&!paid)?'<span class="bill-badge">🧾 PIDE CUENTA</span>':'';
   const BEER_B={corona:'🍺 Corona',victoria:'🍺 Victoria'};
   const ESC_B={tamarindo:'🧂 Tamarindo',sandia:'🧂 Sandía',frutos_rojos:'🧂 Frutos Rojos',mango:'🧂 Mango',chamoy:'🧂 Chamoy',mora_azul:'🧂 Mora Azul',fresa_chamoy:'🧂 Fresa Chamoy'};
   const POLVO_B={mora:'✨ Polvo de mora',tajin:'✨ Tajín',miguelito:'✨ Miguelito',ajonjoli:'✨ Ajonjolí',sin_polvo:'✨ Sin polvo',truena_pop:'💥 Truena Pop +$15',azucar:'✨ Azúcar'};
@@ -566,7 +574,7 @@ function orderCardHTML(o){
   return `<div class="ocard ${o.status}${o.extras_pending?" has-extras":""}" id="oc-${o.id}">
     <div class="oc-head" onclick="toggleCard('${o.id}')">
       <div class="oc-left">
-        <div class="oc-num">Orden #${o.order_number}${extrasBadge}</div>
+        <div class="oc-num">Orden #${o.order_number}${extrasBadge}${billBadge}</div>
         <div class="oc-table">📍 ${o.table_label}${hasExtras?' <span style=\"font-size:10px;color:#FFC233\">⚡ extras</span>':''}</div>
         ${(!paid&&o.payment_method)?`<div class="pay-intent ${o.payment_method}">${PAY_ICO[o.payment_method]} Pagará: ${PAY_LBL[o.payment_method]}</div>`:''}
         ${tipTagHTML}
