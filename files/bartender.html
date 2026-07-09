@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000">
+<title>Sosa's Vibes — Bartender</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#000;--bg-e:#0E0E0E;--bg-e2:#161616;
+  --red:#FF1E1E;--red-d:#C70000;--lime:#B6FF1A;--lime-g:rgba(182,255,26,.35);
+  --white:#FFF;--muted:#B8B8B8;--beer:#FFC233;
+  --nuevo:#FF1E1E;--preparando:#FFC233;--listo:#B6FF1A;--pagado:#4ADE80;
+  --r:14px;--pill:999px;--soft:cubic-bezier(.22,.61,.36,1)
+}
+html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+
+/* ====== LOGIN ====== */
+#loginPage{position:fixed;inset:0;z-index:999;background:radial-gradient(ellipse 70% 50% at 50% 45%,rgba(199,0,0,.12),transparent),#000;display:flex;align-items:center;justify-content:center;padding:24px}
+#loginPage.gone{display:none}
+.lp-box{background:#0E0E0E;border-radius:24px;padding:40px 28px;max-width:340px;width:100%;border:1px solid rgba(255,30,30,.2)}
+.lp-logo{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:3px;color:var(--red);text-align:center;text-shadow:0 0 20px rgba(255,30,30,.4)}
+.lp-sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:32px;margin-top:4px}
+.lp-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px}
+.lp-input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:var(--white);font:400 15px 'Inter',sans-serif;padding:14px 16px;outline:none;transition:border-color .2s;margin-bottom:16px}
+.lp-input:focus{border-color:var(--lime)}
+.lp-btn{width:100%;padding:16px;background:var(--red);border:none;border-radius:14px;color:var(--white);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;cursor:pointer;transition:background .2s;margin-top:4px}
+.lp-btn:active{background:var(--red-d)}
+.lp-err{color:var(--red);font-size:13px;text-align:center;margin-top:12px;min-height:20px}
+.lp-badge{text-align:center;margin-bottom:20px;font-size:32px}
+
+/* ====== APP LAYOUT ====== */
+#appPage{display:none;flex-direction:column;height:100dvh}
+#appPage.on{display:flex}
+.app-bar{background:#0E0E0E;border-bottom:1px solid rgba(255,255,255,.06);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ab-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--red)}
+.ab-right{display:flex;align-items:center;gap:8px}
+.ab-user{font-size:12px;color:var(--muted)}
+.ab-logout{background:rgba(255,30,30,.1);border:1px solid rgba(255,30,30,.3);color:var(--red);font:600 12px 'Inter',sans-serif;padding:6px 12px;border-radius:8px;cursor:pointer}
+/* notification badge */
+.ab-bell{position:relative;width:36px;height:36px;background:rgba(255,255,255,.06);border:none;border-radius:10px;color:var(--white);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.bell-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center}
+.bell-badge.show{display:flex}
+
+/* ====== BOTTOM NAV ====== */
+.bnav{background:#0E0E0E;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.bnav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--muted);font:600 10px 'Inter',sans-serif;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s;min-height:56px;justify-content:center}
+.bnav-btn span{font-size:20px}
+.bnav-btn.on{color:var(--lime)}
+.bnav-btn.on span{filter:drop-shadow(0 0 6px rgba(182,255,26,.5))}
+
+/* ====== MAIN SCROLL ====== */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:16px}
+.page.on{display:block}
+
+/* ====== STATUS TABS (Pedidos) ====== */
+.stabs{display:flex;gap:6px;margin-bottom:16px;background:var(--bg-e);border-radius:12px;padding:4px;flex-shrink:0}
+.stab{flex:1;padding:8px 4px;border:none;border-radius:10px;background:transparent;color:var(--muted);font:700 12px 'Inter',sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;min-height:40px}
+.stab.on{background:var(--bg-e2);color:var(--white)}
+.stab .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stab[data-s="nuevo"] .dot{background:var(--nuevo)}
+.stab[data-s="preparando"] .dot{background:var(--preparando)}
+.stab[data-s="listo"] .dot{background:var(--listo)}
+.stab .cnt{background:rgba(255,255,255,.1);border-radius:var(--pill);padding:1px 6px;font-size:10px}
+.stab[data-s="nuevo"].on .cnt{background:rgba(255,30,30,.2);color:var(--red)}
+.stab[data-s="preparando"].on .cnt{background:rgba(255,194,51,.2);color:var(--beer)}
+.stab[data-s="listo"].on .cnt{background:rgba(182,255,26,.2);color:var(--lime)}
+
+/* ====== ORDER CARDS ====== */
+.orders-list{display:flex;flex-direction:column;gap:10px}
+.ocard{background:var(--bg-e);border-radius:var(--r);border:1px solid rgba(255,255,255,.07);overflow:hidden;transition:border-color .2s}
+.ocard.nuevo{border-left:3px solid var(--nuevo)}
+.ocard.preparando{border-left:3px solid var(--preparando)}
+.ocard.listo{border-left:3px solid var(--listo)}
+.ocard.entregado{border-left:3px solid rgba(255,255,255,.2);opacity:.6}
+.ocard.cancelado{border-left:3px solid rgba(255,255,255,.15);opacity:.45}
+.oc-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.oc-left{display:flex;flex-direction:column;gap:3px}
+.oc-num{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--white);letter-spacing:1px}
+.oc-table{font-size:12px;color:var(--muted)}
+.oc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.oc-total{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--lime)}
+.oc-time{font-size:11px;color:var(--muted)}
+.oc-body{display:none;border-top:1px solid rgba(255,255,255,.06);padding:10px 14px}
+.ocard.expanded .oc-body{display:block}
+.oc-items{margin-bottom:10px}
+.oci{font-size:13px;color:var(--muted);padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.oci-top{display:flex;justify-content:space-between;align-items:center}
+.oci-details{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.oci-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.oci-tag.beer{background:rgba(255,194,51,.15);color:var(--beer);border:1px solid rgba(255,194,51,.3)}
+.oci-tag.esc{background:rgba(255,100,100,.12);color:#FF8A8A;border:1px solid rgba(255,100,100,.25)}
+.oci-tag.polvo{background:rgba(182,255,26,.1);color:var(--lime);border:1px solid rgba(182,255,26,.25)}
+.oci-tag.limon{background:rgba(255,235,100,.1);color:#FFE566;border:1px solid rgba(255,235,100,.25)}
+.oci-tag.clamato{background:rgba(255,99,71,.14);color:#FF8B6B;border:1px solid rgba(255,99,71,.3)}
+.oci-tag.promo{background:rgba(255,140,0,.15);color:#FF9D33;border:1px solid rgba(255,140,0,.4)}
+.promo-note-tag{display:inline-block;font-size:10px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.12);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px;margin-top:4px}
+.pay-intent{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;margin-top:5px}
+.pay-intent.efectivo{background:rgba(74,222,128,.14);color:#4ADE80;border:1px solid rgba(74,222,128,.35)}
+.pay-intent.tarjeta{background:rgba(91,168,255,.14);color:#5BA8FF;border:1px solid rgba(91,168,255,.35)}
+.pay-intent.transferencia{background:rgba(46,155,230,.16);color:#5BB8F0;border:1px solid rgba(46,155,230,.4)}
+.tip-tag{display:inline-block;font-size:10px;font-weight:800;color:var(--lime);background:rgba(182,255,26,.12);border:1px solid rgba(182,255,26,.3);border-radius:20px;padding:2px 8px;margin-top:4px}
+.oc-total-sub{font-size:9px;color:var(--muted);text-align:right;margin-top:-2px}
+.pm-btn.preselected{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
+.pm-hint{font-size:10px;color:var(--muted);text-align:center;width:100%;margin-bottom:4px}
+.oci strong{color:var(--white)}
+.oc-notes{font-size:12px;color:var(--beer);background:rgba(255,194,51,.08);border-radius:8px;padding:6px 10px;margin-bottom:10px;border:1px solid rgba(255,194,51,.15)}
+.oc-actions{display:flex;gap:8px;flex-wrap:wrap}
+.oa-btn{padding:9px 14px;border-radius:10px;border:none;font:700 12px 'Inter',sans-serif;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.oa-prep{background:rgba(255,194,51,.15);color:var(--beer);border:1px solid rgba(255,194,51,.4)}
+.oa-listo{background:rgba(182,255,26,.12);color:var(--lime);border:1px solid rgba(182,255,26,.4)}
+.oa-entregado{background:rgba(74,222,128,.1);color:#4ADE80;border:1px solid rgba(74,222,128,.3)}
+.oa-cancel{background:rgba(255,30,30,.1);color:var(--red);border:1px solid rgba(255,30,30,.3)}
+/* --- Edición de orden --- */
+.oi-del{background:rgba(255,30,30,.12);color:var(--red);border:1px solid rgba(255,30,30,.3);border-radius:7px;font-size:11px;font-weight:800;padding:3px 9px;cursor:pointer;margin-left:8px;flex-shrink:0}
+.oc-editbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;padding-top:10px;border-top:1px dashed rgba(255,255,255,.1)}
+.oe-btn{padding:8px 12px;border-radius:9px;border:1px solid rgba(91,168,255,.35);background:rgba(91,168,255,.1);color:#5BA8FF;font:700 11px 'Inter',sans-serif;cursor:pointer}
+.oe-btn.name{border-color:rgba(255,194,51,.35);background:rgba(255,194,51,.1);color:var(--beer)}
+.oc-name-tag{display:inline-block;font-size:11px;font-weight:800;color:var(--beer);background:rgba(255,194,51,.12);border:1px solid rgba(255,194,51,.3);border-radius:20px;padding:2px 10px;margin-top:4px}
+/* Panel de agregar productos dentro de la tarjeta */
+.oe-panel{display:none;margin-top:10px;padding:12px;background:rgba(0,0,0,.3);border-radius:12px;border:1px solid rgba(255,255,255,.08)}
+.oe-panel.on{display:block}
+.oe-search{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 13px 'Inter',sans-serif;padding:9px 11px;outline:none;margin-bottom:8px}
+.oe-plist{max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:5px}
+.oe-prod{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:9px;cursor:pointer}
+.oe-prod:active{background:rgba(182,255,26,.1)}
+.oe-prod-name{flex:1;font-size:12px;color:var(--white)}
+.oe-prod-price{font-size:12px;color:var(--lime);font-weight:700}
+.oe-prod-add{width:24px;height:24px;border-radius:50%;background:var(--lime);color:#0A0A00;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.oe-cerveza-sola{border:1px solid rgba(255,194,51,.3);background:rgba(255,194,51,.06)}
+.oe-hint{font-size:10px;color:var(--muted);margin:6px 0 4px;text-transform:uppercase;letter-spacing:.5px}
+/* Alerta stock bajo */
+#lowStockBanner{display:none;margin:0 14px 4px;background:rgba(255,30,30,.1);border:1.5px solid rgba(255,30,30,.4);border-radius:12px;padding:10px 14px;cursor:pointer}
+#lowStockBanner.show{display:block}
+.lsb-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;color:var(--red)}
+.lsb-list{display:none;margin-top:8px;font-size:11.5px;color:var(--white);line-height:1.7}
+#lowStockBanner.open .lsb-list{display:block}
+.lsb-zero{color:var(--red);font-weight:700}
+.oa-pay{background:rgba(74,222,128,.15);color:#4ADE80;border:1px solid rgba(74,222,128,.4)}
+.pay-method{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)}
+.pm-btn{padding:7px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);font:600 12px 'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.pm-btn.sel{border-color:var(--lime);color:var(--lime);background:rgba(182,255,26,.1)}
+.oc-paid{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:6px 10px;font-size:12px;color:#4ADE80;text-align:center}
+
+/* ====== EMPTY STATE ====== */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px}
+
+/* ====== MANUAL ORDER ====== */
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:var(--red);margin-bottom:16px}
+.mo-table-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.mt-btn{padding:12px 6px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--white);font:700 13px 'Inter',sans-serif;cursor:pointer;transition:all .2s;text-align:center}
+.mt-btn.sel{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
+.mo-search{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:var(--white);font:400 14px 'Inter',sans-serif;padding:12px 16px;outline:none;margin-bottom:12px}
+.mo-search::placeholder{color:var(--muted)}
+.mo-search:focus{border-color:var(--lime)}
+.mo-prod-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin-bottom:16px}
+.mop{display:flex;align-items:center;gap:10px;background:var(--bg-e);border-radius:10px;padding:10px 12px;cursor:pointer;border:1px solid rgba(255,255,255,.05);transition:border-color .2s}
+.mop:active{border-color:var(--lime)}
+.mop-em{font-size:22px;width:28px;text-align:center}
+.mop-info{flex:1}.mop-name{font-size:13px;font-weight:600}.mop-price{font-size:12px;color:var(--lime);font-family:'Bebas Neue',sans-serif;font-size:14px}
+.mop-add{width:30px;height:30px;background:rgba(182,255,26,.12);border:1.5px solid rgba(182,255,26,.3);border-radius:50%;color:var(--lime);font-size:18px;display:flex;align-items:center;justify-content:center}
+.mo-cart{background:var(--bg-e);border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid rgba(182,255,26,.15)}
+.mo-cart-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.mo-ci{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+.mo-ci-l{font-size:13px;color:var(--white)}.mo-ci-r{display:flex;align-items:center;gap:8px}
+.mo-ci-price{font-size:13px;color:var(--lime);font-family:'Bebas Neue',sans-serif;font-size:15px}
+.mo-ci-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
+.mo-total{display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;margin-top:4px}
+.mo-total-l{font-size:13px;color:var(--muted)}.mo-total-v{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--lime)}
+.mo-submit{width:100%;padding:15px;background:var(--red);border:none;border-radius:12px;color:var(--white);font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;cursor:pointer;transition:background .2s}
+.mo-submit:active{background:var(--red-d)}
+.mo-submit:disabled{opacity:.4}
+.mo-notes{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--white);font:400 13px 'Inter',sans-serif;padding:10px;resize:none;outline:none;margin-bottom:12px}
+.mo-notes:focus{border-color:var(--lime)}
+
+/* ====== ANALYTICS ====== */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.stat-card{background:var(--bg-e);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06)}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px}
+.stat-val.green{color:var(--lime)}.stat-val.red{color:var(--red)}.stat-val.beer{color:var(--beer)}.stat-val.white{color:var(--white)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.an-filter{display:flex;gap:6px;margin-bottom:20px}
+.af-btn{padding:8px 14px;border-radius:var(--pill);border:1.5px solid rgba(255,255,255,.12);background:transparent;color:var(--muted);font:600 12px 'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.af-btn.on{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
+.an-section{margin-bottom:24px}
+.an-stitle{font:700 12px/1 'Inter',sans-serif;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px}
+/* Bar chart CSS */
+.bar-list{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.bar-info{display:flex;align-items:center;gap:8px;min-width:0}
+.bar-em{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.bar-name{font-size:13px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;position:relative;margin-top:4px}
+.bar-fill{height:100%;border-radius:4px;background:var(--lime);transition:width .6s var(--soft)}
+.bar-val{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--lime);flex-shrink:0}
+/* Hour chart */
+.hour-chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding-top:8px}
+.hc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.hc-bar{width:100%;background:rgba(182,255,26,.3);border-radius:3px 3px 0 0;min-height:2px;transition:height .5s var(--soft)}
+.hc-lbl{font-size:7px;color:var(--muted)}
+
+/* ====== CORTE ====== */
+.corte-header{background:var(--bg-e);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid rgba(182,255,26,.15);text-align:center}
+.corte-date{font-size:12px;color:var(--muted);margin-bottom:4px}
+.corte-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--lime);letter-spacing:2px}
+.corte-total{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--white);margin-top:4px}
+.corte-table{width:100%;border-collapse:collapse;margin-bottom:16px}
+.corte-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:6px 0;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}
+.corte-table td{font-size:13px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--white)}
+.corte-table td:last-child{text-align:right;font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--lime)}
+.corte-actions{display:flex;gap:10px}
+.corte-btn{flex:1;padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.12);background:transparent;color:var(--white);font:600 14px 'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.corte-btn.primary{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
+.corte-btn:active{opacity:.8}
+.extras-badge{background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:var(--pill);animation:xpulse 1s ease-in-out infinite;display:inline-block;margin-left:6px;vertical-align:middle}
+@keyframes xpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.93)}}
+.ocard.has-extras{box-shadow:0 0 14px rgba(255,30,30,.3)!important}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#0E0E0E;border:1px solid rgba(182,255,26,.4);color:var(--lime);font:600 13px 'Inter',sans-serif;padding:10px 20px;border-radius:var(--pill);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="lp-box">
+    <div class="lp-badge">🍸</div>
+    <div class="lp-logo">SOSA'S VIBES</div>
+    <div class="lp-sub">Panel de Bartender</div>
+    <div class="lp-label">Email</div>
+    <input class="lp-input" id="lpEmail" type="email" placeholder="bartender@email.com" autocomplete="email">
+    <div class="lp-label">Contraseña</div>
+    <input class="lp-input" id="lpPass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button class="lp-btn" onclick="doLogin()">ENTRAR</button>
+    <div class="lp-err" id="lpErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appPage">
+  <div class="app-bar">
+    <div class="ab-title">SOSA'S VIBES</div>
+    <div class="ab-right">
+      <button class="ab-bell" id="bellBtn"><span>🔔</span><span class="bell-badge" id="bellBadge">0</span></button>
+      <span class="ab-user" id="abUser"></span>
+      <button class="ab-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="main" id="mainScroll">
+    <div id="lowStockBanner" onclick="this.classList.toggle('open')">
+      <div class="lsb-head"><span id="lsbTitle">⚠️ Stock bajo</span><span>▾</span></div>
+      <div class="lsb-list" id="lsbList"></div>
+    </div>
+    <!-- PEDIDOS -->
+    <div class="page on" id="page-pedidos">
+      <div class="stabs">
+        <button class="stab on" data-s="nuevo" onclick="switchStatus(this)"><span class="dot"></span>Nuevos<span class="cnt" id="cnt-nuevo">0</span></button>
+        <button class="stab" data-s="preparando" onclick="switchStatus(this)"><span class="dot"></span>Preparando<span class="cnt" id="cnt-preparando">0</span></button>
+        <button class="stab" data-s="listo" onclick="switchStatus(this)"><span class="dot"></span>Listos<span class="cnt" id="cnt-listo">0</span></button>
+      </div>
+      <div class="orders-list" id="ordersList"></div>
+    </div>
+    <!-- MANUAL -->
+    <div class="page" id="page-manual">
+      <div class="sec-title">Nueva Orden</div>
+      <div class="mo-table-grid" id="moTableGrid"></div>
+      <input class="mo-search" id="moSearch" placeholder="🔍 Buscar producto..." oninput="filterProducts()">
+      <div class="mo-prod-list" id="moProdList"></div>
+      <div class="mo-cart" id="moCartSection" style="display:none">
+        <div class="mo-cart-title">Productos seleccionados</div>
+        <div id="moCartItems"></div>
+        <div class="mo-total"><span class="mo-total-l">Total</span><span class="mo-total-v" id="moTotal">$0</span></div>
+      </div>
+      <textarea class="mo-notes" id="moManualNotes" rows="2" placeholder="Notas especiales..."></textarea>
+      <button class="mo-submit" id="moSubmit" disabled onclick="submitManualOrder()">CREAR ORDEN</button>
+    </div>
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="an-filter">
+        <button class="af-btn on" data-range="today" onclick="setRange(this)">Hoy</button>
+        <button class="af-btn" data-range="week" onclick="setRange(this)">Semana</button>
+        <button class="af-btn" data-range="month" onclick="setRange(this)">Mes</button>
+      </div>
+      <div class="analytics-grid">
+        <div class="stat-card"><div class="stat-label">Ingresos</div><div class="stat-val green" id="an-revenue">$0</div><div class="stat-sub" id="an-rev-sub"></div></div>
+        <div class="stat-card"><div class="stat-label">Órdenes</div><div class="stat-val white" id="an-orders">0</div><div class="stat-sub" id="an-ord-sub">pagadas</div></div>
+        <div class="stat-card"><div class="stat-label">Ticket Prom</div><div class="stat-val beer" id="an-avg">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-val red" id="an-pending">0</div><div class="stat-sub">sin pagar</div></div>
+      </div>
+      <div class="an-section">
+        <div class="an-stitle">🏆 Productos más vendidos</div>
+        <div class="bar-list" id="topProducts"></div>
+      </div>
+      <div class="an-section">
+        <div class="an-stitle">🕐 Ventas por hora</div>
+        <div class="hour-chart" id="hourChart"></div>
+      </div>
+      <div class="an-section">
+        <div class="an-stitle">📦 Guía de inventario (más vendidos)</div>
+        <div class="bar-list" id="inventoryList"></div>
+      </div>
+    </div>
+    <!-- CORTE -->
+    <div class="page" id="page-corte">
+      <div class="corte-header">
+        <div class="corte-date" id="corteDate"></div>
+        <div class="corte-title">CORTE DEL DÍA</div>
+        <div class="corte-total" id="corteTotal">$0</div>
+      </div>
+      <div class="an-section">
+        <div class="an-stitle">Resumen de ventas</div>
+        <table class="corte-table">
+          <tr><th>Concepto</th><th>Cantidad</th><th>Total</th></tr>
+          <tbody id="corteTable"></tbody>
+        </table>
+      </div>
+      <div class="an-section">
+        <div class="an-stitle">Productos vendidos hoy</div>
+        <table class="corte-table">
+          <tr><th>Producto</th><th>Uds</th><th>Ingreso</th></tr>
+          <tbody id="corteProds"></tbody>
+        </table>
+      </div>
+      <div class="corte-actions">
+        <button class="corte-btn" onclick="copyCorte()">📋 Copiar resumen</button>
+        <button class="corte-btn primary" onclick="printCorte()">🖨️ Imprimir</button>
+      </div>
+
+    </div>
+  </div>
+  <nav class="bnav">
+    <button class="bnav-btn on" data-page="pedidos" onclick="switchPage(this)"><span>📋</span>Pedidos</button>
+    <button class="bnav-btn" data-page="manual" onclick="switchPage(this)"><span>➕</span>Manual</button>
+    <button class="bnav-btn" data-page="analytics" onclick="switchPage(this)"><span>📊</span>Analytics</button>
+    <button class="bnav-btn" data-page="corte" onclick="switchPage(this)"><span>💰</span>Corte</button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const {createClient} = supabase;
+const sb = createClient('https://izpuzcjsarncdvpkjbzp.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6cHV6Y2pzYXJuY2R2cGtqYnpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NDQ1MTEsImV4cCI6MjA5NjAyMDUxMX0.O4SEqPf-hMtAhmz-nXUrCQL_wwtS4qC2a_ZKFr6hbQQ');
+
+// ===== STATE =====
+let orders=[], products=[], tables=[], moCart={}, moSelTable=null;
+let curStatus='nuevo', curRange='today', orderSub=null;
+
+// ===== AUTH =====
+async function doLogin(){
+  const email=document.getElementById('lpEmail').value.trim();
+  const pass=document.getElementById('lpPass').value;
+  const errEl=document.getElementById('lpErr');
+  errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Completa todos los campos';return}
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){errEl.textContent='Credenciales incorrectas';return}
+  enterApp(data.user);
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  document.getElementById('appPage').classList.remove('on');
+  document.getElementById('loginPage').classList.remove('gone');
+  if(orderSub) sb.removeChannel(orderSub);
+}
+function enterApp(user){
+  document.getElementById('loginPage').classList.add('gone');
+  document.getElementById('appPage').classList.add('on');
+  document.getElementById('abUser').textContent=user.email.split('@')[0];
+  initApp();
+}
+// Restaurar sesión existente
+sb.auth.getSession().then(({data})=>{if(data.session) enterApp(data.session.user)});
+document.getElementById('lpPass').addEventListener('keydown',e=>{if(e.key==='Enter') doLogin()});
+
+// ===== INIT =====
+async function initApp(){
+  await Promise.all([loadOrders(), loadProducts(), loadTables()]);
+  checkLowStock(); setInterval(checkLowStock, 5*60*1000);
+  subscribeOrders();
+  renderOrdersList();
+  renderManualProds();
+  renderManualTables();
+}
+
+// ===== ORDERS =====
+async function loadOrders(){
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const {data:ords,error:oErr}=await sb.from('orders').select('*')
+      .gte('created_at',today+'T00:00:00').neq('status','cancelado')
+      .order('created_at',{ascending:false});
+    if(oErr){ console.error('Error cargando órdenes:',oErr); return; }
+    if(!ords||!ords.length){ orders=[]; updateCounts(); renderOrdersList(); return; }
+    const ids=ords.map(o=>o.id);
+    const {data:items}=await sb.from('order_items').select('*').in('order_id',ids);
+    orders=ords.map(o=>({...o,order_items:(items||[]).filter(i=>i.order_id===o.id)}));
+    updateCounts();
+  }catch(e){ console.error('loadOrders catch:',e); }
+}
+async function checkLowStock(){
+  try{
+    const {data,error}=await sb.rpc('low_stock_alert');
+    if(error||!data) return;
+    const banner=document.getElementById('lowStockBanner');
+    if(!data.length){ banner.classList.remove('show'); return; }
+    const zeros=data.filter(x=>Number(x.stock)===0);
+    document.getElementById('lsbTitle').textContent=
+      (zeros.length?`🔴 ${zeros.length} agotado${zeros.length>1?'s':''} · `:'⚠️ ')+`${data.length} con stock bajo — avísale al jefe`;
+    document.getElementById('lsbList').innerHTML=data.map(x=>
+      `<div>${Number(x.stock)===0?'<span class="lsb-zero">AGOTADO</span>':Number(x.stock)} — ${x.name} <span style="color:var(--muted)">(mín ${Number(x.min)})</span></div>`
+    ).join('');
+    banner.classList.add('show');
+  }catch(e){ console.error('checkLowStock:',e); }
+}
+async function loadProducts(){
+  const {data}=await sb.from('products').select('*').eq('available',true).order('category').order('sort_order');
+  if(data) products=data;
+}
+async function loadTables(){
+  const {data}=await sb.from('restaurant_tables').select('*').eq('active',true).order('number');
+  if(data) tables=data;
+}
+function subscribeOrders(){
+  orderSub=sb.channel('orders-rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},async payload=>{
+      try{
+        if(payload.eventType==='INSERT'){
+          const {data:ord}=await sb.from('orders').select('*').eq('id',payload.new.id).single();
+          const {data:items}=await sb.from('order_items').select('*').eq('order_id',payload.new.id);
+          if(ord){
+            ord.order_items=items||[];
+            orders.unshift(ord);
+            playDing();
+            showToast('🆕 Nueva orden: '+ord.table_label);
+            showBellBadge();
+          }
+        } else if(payload.eventType==='UPDATE'){
+          const idx=orders.findIndex(o=>o.id===payload.new.id);
+          if(idx>=0){
+            const old=orders[idx];
+            const newMethod = payload.new.payment_method && payload.new.payment_method!==old.payment_method && payload.new.payment_status!=='pagado';
+            const wasExtras = !old.extras_pending && payload.new.extras_pending;
+            orders[idx]={...old,...payload.new};
+            if(wasExtras){
+              playExtraAlert();
+              showToast('⚡ EXTRAS URGENTES · #'+orders[idx].order_number+' · '+orders[idx].table_label);
+              showBellBadge();
+            }
+            if(newMethod){
+              playDing();
+              const m=payload.new.payment_method;
+              const ico={efectivo:'💵',tarjeta:'💳',transferencia:'📲'}[m]||'💰';
+              showToast(ico+' #'+orders[idx].order_number+' pagará con '+m);
+              showBellBadge();
+            }
+            if(old.status!=='cancelado' && payload.new.status==='cancelado'){
+              showToast('🚫 #'+orders[idx].order_number+' · '+orders[idx].table_label+' fue cancelada por el cliente');
+            }
+          }
+        } else if(payload.eventType==='DELETE'){
+          orders=orders.filter(o=>o.id!==payload.old.id);
+        }
+        updateCounts(); renderOrdersList();
+      }catch(e){
+        console.error('Realtime error:',e);
+        await loadOrders(); renderOrdersList(); updateCounts();
+      }
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'order_items'},async payload=>{
+      try{
+        const ord=orders.find(o=>o.id===payload.new.order_id);
+        if(ord){ ord.order_items=ord.order_items||[]; ord.order_items.push(payload.new); renderOrdersList(); }
+      }catch(e){}
+    })
+    .subscribe((status)=>{ console.log('Realtime status:',status); });
+}
+
+function updateCounts(){
+  ['nuevo','preparando','listo'].forEach(s=>{
+    const n=orders.filter(o=>o.status===s).length;
+    document.getElementById('cnt-'+s).textContent=n;
+  });
+  const newCount=orders.filter(o=>o.status==='nuevo').length;
+  const badge=document.getElementById('bellBadge');
+  badge.textContent=newCount;
+  newCount>0?badge.classList.add('show'):badge.classList.remove('show');
+}
+
+function switchStatus(btn){
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  curStatus=btn.dataset.s;
+  renderOrdersList();
+}
+
+function renderOrdersList(){
+  const filtered=orders.filter(o=>o.status===curStatus);
+  const el=document.getElementById('ordersList');
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">${curStatus==='nuevo'?'✅':curStatus==='preparando'?'🍳':'🎉'}</div><p>No hay órdenes ${curStatus==='nuevo'?'nuevas':curStatus==='preparando'?'en preparación':'listas'}</p></div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(o=>orderCardHTML(o)).join('');
+}
+
+const PAY_ICO={efectivo:'💵',tarjeta:'💳',transferencia:'📲'};
+const PAY_LBL={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia'};
+function orderCardHTML(o){
+  const items=o.order_items||[];
+  const paid=o.payment_status==='pagado';
+  const since=timeSince(o.created_at);
+  const hasExtras=items.some(i=>i.is_extra);
+  const extrasBadge=o.extras_pending?'<span class="extras-badge">⚡ EXTRAS</span>':'';
+  const BEER_B={corona:'🍺 Corona',victoria:'🍺 Victoria'};
+  const ESC_B={tamarindo:'🧂 Tamarindo',sandia:'🧂 Sandía',frutos_rojos:'🧂 Frutos Rojos',mango:'🧂 Mango',chamoy:'🧂 Chamoy',mora_azul:'🧂 Mora Azul',fresa_chamoy:'🧂 Fresa Chamoy'};
+  const POLVO_B={mora:'✨ Polvo de mora',tajin:'✨ Tajín',miguelito:'✨ Miguelito',ajonjoli:'✨ Ajonjolí',sin_polvo:'✨ Sin polvo',truena_pop:'💥 Truena Pop +$15',azucar:'✨ Azúcar'};
+  const LIMON_B={sal_limon:'🍋 Sal y limón',solo_sal:'🧂 Solo sal',solo_limon:'🍋 Solo limón',sin_sal_limon:'🚫 Sin sal/limón'};
+  const CLAMATO_B={con_clamato:'🍅 Con Clamato',sin_clamato:'🚫 Sin Clamato'};
+  const itemsHTML=items.map(i=>{
+    const extraBadge=i.is_extra?'<span style="background:rgba(255,194,51,.2);color:#FFC233;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:5px">EXTRA</span>':'';
+    const sub=i.subtotal!==undefined?Number(i.subtotal):(Number(i.product_price)+Number(i.escarchado_extra||0))*Number(i.quantity);
+    const tags=[];
+    if(i.promo_name) tags.push(`<span class="oci-tag promo">${i.promo_name}</span>`);
+    if(i.beer_choice) tags.push(`<span class="oci-tag beer">${BEER_B[i.beer_choice]||i.beer_choice}</span>`);
+    if(i.escarchado_choice) tags.push(`<span class="oci-tag esc">${ESC_B[i.escarchado_choice]||'🧂 '+i.escarchado_choice}</span>`);
+    if(i.polvo_choice) tags.push(`<span class="oci-tag polvo">${POLVO_B[i.polvo_choice]||'✨ '+i.polvo_choice}</span>`);
+    if(i.clamato_choice) tags.push(`<span class="oci-tag clamato">${CLAMATO_B[i.clamato_choice]||'🍅 '+i.clamato_choice}</span>`);
+    if(i.limon_choice) tags.push(`<span class="oci-tag limon">${LIMON_B[i.limon_choice]||'🍋 '+i.limon_choice}</span>`);
+    const tagsHTML=tags.length?`<div class="oci-details">${tags.join('')}</div>`:'';
+    const delBtn=!paid?`<button class="oi-del" onclick="event.stopPropagation();removeOrderItem('${i.id}','${o.id}')">✕</button>`:'';
+    return `<div class="oci"><div class="oci-top"><strong>${i.quantity}x ${i.product_name}${extraBadge}</strong><span style="display:flex;align-items:center">$${sub.toFixed(0)}${delBtn}</span></div>${tagsHTML}</div>`;
+  }).join('');
+  const notesHTML=o.notes?`<div class="oc-notes">📝 ${o.notes}</div>`:'';
+  let actionsHTML='';
+  if(!paid){
+    if(o.status==='nuevo') actionsHTML+=`<button class="oa-btn oa-prep" onclick="event.stopPropagation();updateStatus('${o.id}','preparando')">→ Preparando</button>`;
+    if(o.status==='preparando') actionsHTML+=`<button class="oa-btn oa-listo" onclick="event.stopPropagation();updateStatus('${o.id}','listo')">✓ Listo</button>`;
+    if(o.status==='listo') actionsHTML+=`<button class="oa-btn oa-entregado" onclick="event.stopPropagation();updateStatus('${o.id}','entregado')">🍺 Entregado</button>`;
+    if(o.status!=='entregado') actionsHTML+=`<button class="oa-btn oa-cancel" onclick="event.stopPropagation();cancelOrder('${o.id}')">✕</button>`;
+    actionsHTML+=`<button class="oa-btn oa-pay" onclick="event.stopPropagation();showPayMethods('${o.id}')">💰 Cobrar</button>`;
+  }
+  const tipAmt=Number(o.tip_amount||0);
+  const grandTotal=Number(o.total)+tipAmt;
+  const tipTagHTML=tipAmt>0?`<div class="tip-tag">✨ +$${tipAmt.toFixed(0)} propina (${Number(o.tip_percent)}%)</div>`:'';
+  const paySection=paid
+    ? `<div class="oc-paid">✅ Pagado con ${o.payment_method} — $${grandTotal.toFixed(0)}${tipAmt>0?' (incluye $'+tipAmt.toFixed(0)+' propina)':''}</div>`
+    : `<div class="pay-method" id="pm-${o.id}" style="display:none">
+        ${o.payment_method?`<div class="pm-hint">El cliente eligió: ${PAY_ICO[o.payment_method]} ${PAY_LBL[o.payment_method]}</div>`:''}
+        ${tipAmt>0?`<div class="pm-hint" style="color:var(--lime)">✨ Cobrar con propina: $${grandTotal.toFixed(0)}</div>`:''}
+        <button class="pm-btn ${o.payment_method==='efectivo'?'preselected':''}" onclick="event.stopPropagation();payOrder('${o.id}','efectivo')">💵 Efectivo</button>
+        <button class="pm-btn ${o.payment_method==='tarjeta'?'preselected':''}" onclick="event.stopPropagation();payOrder('${o.id}','tarjeta')">💳 Tarjeta</button>
+        <button class="pm-btn ${o.payment_method==='transferencia'?'preselected':''}" onclick="event.stopPropagation();payOrder('${o.id}','transferencia')">📲 Transfer</button>
+      </div>`;
+  return `<div class="ocard ${o.status}${o.extras_pending?" has-extras":""}" id="oc-${o.id}">
+    <div class="oc-head" onclick="toggleCard('${o.id}')">
+      <div class="oc-left">
+        <div class="oc-num">Orden #${o.order_number}${extrasBadge}</div>
+        <div class="oc-table">📍 ${o.table_label}${hasExtras?' <span style=\"font-size:10px;color:#FFC233\">⚡ extras</span>':''}</div>
+        ${(!paid&&o.payment_method)?`<div class="pay-intent ${o.payment_method}">${PAY_ICO[o.payment_method]} Pagará: ${PAY_LBL[o.payment_method]}</div>`:''}
+        ${tipTagHTML}
+        ${o.custom_name?`<div class="oc-name-tag">🏷️ ${o.custom_name}</div>`:''}
+        ${Number(o.discount_amount||0)>0?`<div class="promo-note-tag">🔥 ${o.promo_note||'Promo'} </div>`:''}
+      </div>
+      <div class="oc-right">
+        <div class="oc-total">$${grandTotal.toFixed(0)}</div>
+        ${tipAmt>0?`<div class="oc-total-sub">cuenta $${Number(o.total).toFixed(0)}</div>`:''}
+        <div class="oc-time">⏱ ${since}</div>
+      </div>
+    </div>
+    <div class="oc-body">
+      <div class="oc-items">${itemsHTML}</div>
+      ${notesHTML}
+      ${!paid?`<div class="oc-editbar">
+        <button class="oe-btn" onclick="event.stopPropagation();toggleEditPanel('${o.id}')">➕ Agregar productos</button>
+        <button class="oe-btn name" onclick="event.stopPropagation();promptOrderName('${o.id}')">🏷️ ${o.custom_name?'Cambiar':'Poner'} nombre</button>
+      </div>
+      <div class="oe-panel" id="oe-${o.id}">
+        <input class="oe-search" placeholder="🔍 Buscar producto..." oninput="renderEditProds('${o.id}',this.value)" onclick="event.stopPropagation()">
+        <div class="oe-plist" id="oep-${o.id}"></div>
+      </div>`:''}
+      <div class="oc-actions">${actionsHTML}</div>
+      ${paySection}
+    </div>
+  </div>`;
+}
+
+function toggleCard(id){
+  const el=document.getElementById('oc-'+id);
+  el?.classList.toggle('expanded');
+  // Al expandir, marcar extras como vistos
+  if(el?.classList.contains('expanded')){
+    const ord=orders.find(o=>o.id===id);
+    if(ord?.extras_pending){
+      sb.from('orders').update({extras_pending:false}).eq('id',id);
+      ord.extras_pending=false;
+      // Quitar badge visualmente sin re-renderizar todo
+      el.querySelector('.extras-badge')?.remove();
+      el.classList.remove('has-extras');
+    }
+  }
+}
+// ===== EDICIÓN DE ORDEN =====
+async function removeOrderItem(itemId, orderId){
+  if(!confirm('¿Eliminar este producto de la orden? Su inventario se devolverá automáticamente.')) return;
+  try{
+    const {data,error}=await sb.rpc('remove_order_item',{p_order_item_id:itemId});
+    if(error) throw error;
+    showToast('✅ Producto eliminado · inventario devuelto');
+    await loadOrders(); renderOrdersList(); updateCounts();
+    // Reabrir la tarjeta que estábamos editando
+    document.getElementById('oc-'+orderId)?.classList.add('expanded');
+  }catch(e){ console.error('removeOrderItem error:',e); showToast('❌ '+(e.message||'No se pudo eliminar')); }
+}
+
+function toggleEditPanel(orderId){
+  const panel=document.getElementById('oe-'+orderId);
+  if(!panel) return;
+  const opening=!panel.classList.contains('on');
+  panel.classList.toggle('on');
+  if(opening) renderEditProds(orderId,'');
+}
+
+function renderEditProds(orderId, query){
+  const el=document.getElementById('oep-'+orderId);
+  if(!el) return;
+  const q=(query||'').toLowerCase();
+  const filtered=products.filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));
+  // Cerveza sola primero (destacada), luego el resto
+  const solas=filtered.filter(p=>p.category==='cerveza_sola');
+  const resto=filtered.filter(p=>p.category!=='cerveza_sola');
+  let html='';
+  if(solas.length){
+    html+='<div class="oe-hint">🍺 Cerveza sola</div>';
+    html+=solas.map(p=>prodRow(p,orderId,true)).join('');
+  }
+  if(resto.length){
+    if(solas.length) html+='<div class="oe-hint">Menú</div>';
+    html+=resto.map(p=>prodRow(p,orderId,false)).join('');
+  }
+  if(!html) html='<div style="color:var(--muted);font-size:12px;padding:8px">Sin resultados</div>';
+  el.innerHTML=html;
+}
+function prodRow(p,orderId,isSola){
+  return `<div class="oe-prod ${isSola?'oe-cerveza-sola':''}" onclick="event.stopPropagation();addItemToOrder('${orderId}','${p.id}')">
+    <span>${p.emoji||'🍺'}</span>
+    <span class="oe-prod-name">${p.name}</span>
+    <span class="oe-prod-price">$${Number(p.price).toFixed(0)}</span>
+    <span class="oe-prod-add">+</span>
+  </div>`;
+}
+async function addItemToOrder(orderId, productId){
+  try{
+    const {data,error}=await sb.rpc('bartender_add_items',{p_order_id:orderId,p_items:[{product_id:productId,quantity:1}]});
+    if(error) throw error;
+    const p=products.find(x=>x.id===productId);
+    showToast('✅ '+(p?p.name:'Producto')+' agregado');
+    await loadOrders(); renderOrdersList(); updateCounts();
+    // Reabrir tarjeta y panel para seguir agregando
+    document.getElementById('oc-'+orderId)?.classList.add('expanded');
+    const panel=document.getElementById('oe-'+orderId);
+    if(panel){ panel.classList.add('on'); renderEditProds(orderId,''); }
+  }catch(e){ console.error('addItemToOrder error:',e); showToast('❌ '+(e.message||'No se pudo agregar')); }
+}
+async function promptOrderName(orderId){
+  const ord=orders.find(o=>o.id===orderId);
+  const current=ord?.custom_name||'';
+  const name=prompt('Nombre para esta orden (ej. "Orden de Joshep"):', current);
+  if(name===null) return; // canceló
+  try{
+    const {error}=await sb.rpc('set_order_name',{p_order_id:orderId,p_name:name});
+    if(error) throw error;
+    showToast(name.trim()?'✅ Nombre guardado':'✅ Nombre quitado');
+    await loadOrders(); renderOrdersList(); updateCounts();
+    document.getElementById('oc-'+orderId)?.classList.add('expanded');
+  }catch(e){ console.error('promptOrderName error:',e); showToast('❌ '+(e.message||'No se pudo guardar')); }
+}
+
+async function updateStatus(id,status){
+  try{
+    const updates={status};
+    if(status==='listo') updates.extras_pending=false;
+    const {error}=await sb.from('orders').update(updates).eq('id',id);
+    if(error) throw error;
+    showToast('Estado actualizado: '+status);
+  }catch(e){ console.error('updateStatus error:',e); showToast('❌ Error al actualizar'); }
+}
+async function cancelOrder(id){
+  if(!confirm('¿Cancelar esta orden? El inventario de todos sus productos se devolverá automáticamente.')) return;
+  try{
+    const {error}=await sb.rpc('cancel_order_admin',{p_order_id:id});
+    if(error) throw error;
+    showToast('✅ Orden cancelada · inventario devuelto');
+    orders=orders.filter(o=>o.id!==id); renderOrdersList(); updateCounts();
+  }catch(e){ console.error('cancelOrder error:',e); showToast('❌ '+(e.message||'No se pudo cancelar')); }
+}
+function showPayMethods(id){
+  document.querySelectorAll('[id^="pm-"]').forEach(el=>el.style.display='none');
+  const el=document.getElementById('pm-'+id);
+  if(el) el.style.display='flex';
+}
+async function payOrder(id,method){
+  try{
+    const {data,error}=await sb.rpc('pay_order',{p_order_id:id,p_method:method});
+    if(error) throw error;
+    showToast('✅ Cobrado $'+Number(data.grand_total).toFixed(0)+' con '+method+(Number(data.tip)>0?' (incluye $'+Number(data.tip).toFixed(0)+' propina)':''));
+    await loadOrders(); renderOrdersList(); updateCounts();
+  }catch(e){ console.error('payOrder error:',e); showToast('❌ '+(e.message||'Error al cobrar')); }
+}
+
+// ===== MANUAL ORDER =====
+function renderManualTables(){
+  const grid=document.getElementById('moTableGrid');
+  if(!grid) return;
+  const mesas=tables.filter(t=>t.type==='mesa');
+  const barra=tables.find(t=>t.type==='barra');
+  let html=mesas.map(t=>`<button class="mt-btn" data-id="${t.id}" data-label="${t.label}" onclick="selMoTable(this,'${t.id}','${t.label}')">${t.label}</button>`).join('');
+  if(barra) html+=`<button class="mt-btn" data-id="${barra.id}" onclick="selMoTable(this,'${barra.id}','Barra')">🍸 Barra</button>`;
+  html+=`<button class="mt-btn" onclick="selMoTable(this,null,'De pie (Pase)')">🚶 De pie</button>`;
+  grid.innerHTML=html;
+}
+function selMoTable(btn,id,label){
+  document.querySelectorAll('.mt-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  moSelTable={id,label};
+  checkMoSubmit();
+}
+function filterProducts(){
+  const q=document.getElementById('moSearch').value.toLowerCase();
+  const list=document.getElementById('moProdList');
+  const filtered=products.filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));
+  list.innerHTML=filtered.map(p=>`
+    <div class="mop" onclick="addToMoCart('${p.id}')">
+      <span class="mop-em">${p.emoji||'🍺'}</span>
+      <div class="mop-info"><div class="mop-name">${p.name}</div><div class="mop-price">$${Number(p.price).toFixed(0)}</div></div>
+      <div class="mop-add">+</div>
+    </div>`).join('');
+}
+function renderManualProds(){ filterProducts(); }
+function addToMoCart(pid){
+  const p=products.find(x=>x.id===pid);
+  if(!p) return;
+  if(!moCart[pid]) moCart[pid]={product:p,qty:0};
+  moCart[pid].qty++;
+  renderMoCart(); checkMoSubmit();
+}
+function removeMoCart(pid){ delete moCart[pid]; renderMoCart(); checkMoSubmit(); }
+function renderMoCart(){
+  const items=Object.values(moCart);
+  const sec=document.getElementById('moCartSection');
+  const el=document.getElementById('moCartItems');
+  if(!items.length){sec.style.display='none';return}
+  sec.style.display='block';
+  const total=items.reduce((s,c)=>s+c.product.price*c.qty,0);
+  el.innerHTML=items.map(c=>`<div class="mo-ci"><div class="mo-ci-l">${c.qty}x ${c.product.name}</div><div class="mo-ci-r"><span class="mo-ci-price">$${(c.product.price*c.qty).toFixed(0)}</span><button class="mo-ci-del" onclick="removeMoCart('${c.product.id}')">✕</button></div></div>`).join('');
+  document.getElementById('moTotal').textContent='$'+total.toFixed(0);
+}
+function checkMoSubmit(){ document.getElementById('moSubmit').disabled=!moSelTable||!Object.keys(moCart).length; }
+function findActiveOrderForTable(tableId){
+  // Busca si la mesa ya tiene una cuenta abierta (sin pagar, no cancelada/entregada)
+  return orders.find(o=>o.table_id===tableId && o.payment_status==='pendiente' && !['cancelado','entregado'].includes(o.status));
+}
+async function submitManualOrder(){
+  if(!moSelTable||!Object.keys(moCart).length) return;
+  const btn=document.getElementById('moSubmit');
+  const isWalkin = !moSelTable.id;
+  const existing = isWalkin ? null : findActiveOrderForTable(moSelTable.id);
+  btn.disabled=true; btn.textContent=existing?'Agregando...':'Creando...';
+  try{
+    const items=Object.values(moCart).map(c=>({product_id:c.product.id, quantity:c.qty}));
+    let result;
+    if(existing){
+      const {data,error}=await sb.rpc('add_extra_items',{p_order_id:existing.id,p_items:items});
+      if(error) throw error;
+      result={order_number:existing.order_number, added:true};
+    } else {
+      const {data,error}=await sb.rpc('place_order',{
+        p_table_id: isWalkin ? null : moSelTable.id,
+        p_is_walkin: isWalkin,
+        p_notes: document.getElementById('moManualNotes').value.trim()||null,
+        p_items: items
+      });
+      if(error) throw error;
+      result=data;
+    }
+    moCart={}; moSelTable=null;
+    document.querySelectorAll('.mt-btn').forEach(b=>b.classList.remove('sel'));
+    document.getElementById('moManualNotes').value='';
+    renderMoCart(); checkMoSubmit(); filterProducts();
+    await loadOrders(); renderOrdersList(); updateCounts();
+    showToast(result.added ? '✅ Agregado a la orden #'+result.order_number : '✅ Orden #'+result.order_number+' creada');
+  } catch(e){ console.error(e); alert('Error: '+(e.message||'no se pudo procesar')); }
+  btn.disabled=false; btn.textContent='CREAR ORDEN';
+}
+
+// ===== ANALYTICS =====
+function setRange(btn){
+  document.querySelectorAll('.af-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  curRange=btn.dataset.range;
+  loadAnalytics();
+}
+function rangeStart(){
+  const now=new Date();
+  if(curRange==='today') return new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+  if(curRange==='week'){ now.setDate(now.getDate()-7); return now.toISOString(); }
+  if(curRange==='month'){ now.setDate(now.getDate()-30); return now.toISOString(); }
+}
+async function loadAnalytics(){
+  const since=rangeStart();
+  const {data:ords}=await sb.from('orders').select('*, order_items(*)').gte('created_at',since).neq('status','cancelado');
+  if(!ords) return;
+  const paid=ords.filter(o=>o.payment_status==='pagado');
+  const revenue=paid.reduce((s,o)=>s+Number(o.total),0);
+  const avgTicket=paid.length?revenue/paid.length:0;
+  const pending=ords.filter(o=>o.payment_status==='pendiente').length;
+  document.getElementById('an-revenue').textContent='$'+revenue.toFixed(0);
+  document.getElementById('an-rev-sub').textContent=curRange==='today'?'hoy':curRange==='week'?'7 días':'30 días';
+  document.getElementById('an-orders').textContent=paid.length;
+  document.getElementById('an-avg').textContent='$'+avgTicket.toFixed(0);
+  document.getElementById('an-pending').textContent=pending;
+  // Products ranking
+  const prodMap={};
+  ords.forEach(o=>(o.order_items||[]).forEach(i=>{
+    if(!prodMap[i.product_name]) prodMap[i.product_name]={name:i.product_name,qty:0,revenue:0};
+    prodMap[i.product_name].qty+=i.quantity;
+    prodMap[i.product_name].revenue+=Number(i.subtotal||0);
+  }));
+  const top=Object.values(prodMap).sort((a,b)=>b.qty-a.qty).slice(0,8);
+  const maxQty=top[0]?.qty||1;
+  const emojis={'Michelada Clásica':'🍺','Michelada de Camarón':'🦐','Michelada Mangonada':'🥭','Michelada Vampiro':'🧛','Corona':'🍻','Modelo Especial':'🍻','Modelo Negra':'🍻','Pacífico':'🍻','Margarita':'🍹','Paloma':'🍹','Piña Colada':'🥥','Mojito':'🌿','Totopos con Guacamole':'🥑','Alitas BBQ':'🍗','Nachos Especiales':'🧀','Elotes Locos':'🌽','Camarones a la Diabla':'🦐','Tacos de Camarón':'🌮','Quesadilla de Camarón':'🫓','Caldo de Camarón':'🍲'};
+  document.getElementById('topProducts').innerHTML=top.map(p=>`
+    <div class="bar-item">
+      <div class="bar-info">
+        <span class="bar-em">${emojis[p.name]||'🍺'}</span>
+        <div><div class="bar-name">${p.name}</div><div class="bar-track"><div class="bar-fill" style="width:${(p.qty/maxQty*100).toFixed(0)}%"></div></div></div>
+      </div>
+      <span class="bar-val">${p.qty}</span>
+    </div>`).join('');
+  document.getElementById('inventoryList').innerHTML=top.slice(0,5).map((p,i)=>`
+    <div class="bar-item">
+      <div class="bar-info"><span class="bar-em">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span><div><div class="bar-name">${p.name}</div><div style="font-size:11px;color:var(--muted)">$${p.revenue.toFixed(0)} ingresado</div></div></div>
+      <span class="bar-val" style="color:var(--beer)">${p.qty} uds</span>
+    </div>`).join('');
+  // Hour chart
+  const hourCount=Array(24).fill(0);
+  ords.forEach(o=>{ const h=new Date(o.created_at).getHours(); hourCount[h]++; });
+  const peakHours=hourCount.map((n,h)=>({h,n})).filter(x=>x.n>0||x.h>=12).slice(12,24);
+  const maxH=Math.max(...peakHours.map(x=>x.n),1);
+  document.getElementById('hourChart').innerHTML=peakHours.map(x=>`
+    <div class="hc-col">
+      <div class="hc-bar" style="height:${Math.max(4,(x.n/maxH*70)).toFixed(0)}px;opacity:${x.n?1:.2}"></div>
+      <div class="hc-lbl">${x.h}h</div>
+    </div>`).join('');
+}
+
+// ===== CORTE =====
+async function loadCorte(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('corteDate').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const {data:ords}=await sb.from('orders').select('*, order_items(*)').gte('created_at',today+'T00:00:00');
+  if(!ords){document.getElementById('corteTotal').textContent='$0';return}
+  const paid=ords.filter(o=>o.payment_status==='pagado');
+  const pending=ords.filter(o=>o.payment_status==='pendiente'&&o.status!=='cancelado');
+  const cancelled=ords.filter(o=>o.status==='cancelado');
+  const revenue=paid.reduce((s,o)=>s+Number(o.total),0);
+  const tips=paid.reduce((s,o)=>s+Number(o.tip_amount||0),0);
+  const collected=revenue+tips;
+  const byMethod=m=>{
+    const rows=paid.filter(o=>o.payment_method===m);
+    return {n:rows.length, amt:rows.reduce((s,o)=>s+Number(o.total)+Number(o.tip_amount||0),0)};
+  };
+  const ef=byMethod('efectivo'), tj=byMethod('tarjeta'), tr=byMethod('transferencia');
+  document.getElementById('corteTotal').textContent='$'+collected.toFixed(0);
+  document.getElementById('corteTable').innerHTML=`
+    <tr><td>✅ Cuentas pagadas</td><td>${paid.length}</td><td>$${revenue.toFixed(0)}</td></tr>
+    <tr><td>✨ Propinas</td><td>${paid.filter(o=>Number(o.tip_amount||0)>0).length}</td><td>$${tips.toFixed(0)}</td></tr>
+    <tr><td><strong>💰 Total cobrado</strong></td><td></td><td><strong>$${collected.toFixed(0)}</strong></td></tr>
+    <tr><td>⏳ Pendientes</td><td>${pending.length}</td><td>$${pending.reduce((s,o)=>s+Number(o.total)+Number(o.tip_amount||0),0).toFixed(0)}</td></tr>
+    <tr><td>❌ Canceladas</td><td>${cancelled.length}</td><td>—</td></tr>
+    <tr><td><strong>💵 Efectivo</strong></td><td>${ef.n}</td><td>$${ef.amt.toFixed(0)}</td></tr>
+    <tr><td><strong>💳 Tarjeta</strong></td><td>${tj.n}</td><td>$${tj.amt.toFixed(0)}</td></tr>
+    <tr><td><strong>📲 Transfer</strong></td><td>${tr.n}</td><td>$${tr.amt.toFixed(0)}</td></tr>`;
+  const prodMap={};
+  ords.filter(o=>o.status!=='cancelado').forEach(o=>(o.order_items||[]).forEach(i=>{
+    if(!prodMap[i.product_name]) prodMap[i.product_name]={qty:0,revenue:0};
+    prodMap[i.product_name].qty+=i.quantity;
+    prodMap[i.product_name].revenue+=Number(i.subtotal||0);
+  }));
+  const prods=Object.entries(prodMap).sort((a,b)=>b[1].qty-a[1].qty);
+  document.getElementById('corteProds').innerHTML=prods.map(([name,v])=>`<tr><td>${name}</td><td>${v.qty}</td><td>$${v.revenue.toFixed(0)}</td></tr>`).join('');
+  window._corteData={revenue,paid:paid.length,pending:pending.length,cancelled:cancelled.length,prods};
+}
+
+function copyCorte(){
+  if(!window._corteData) return;
+  const {revenue,paid,pending,prods}=window._corteData;
+  const d=new Date().toLocaleDateString('es-MX');
+  let txt=`CORTE SOSA'S VIBES — ${d}\n`;
+  txt+=`Total: $${revenue.toFixed(0)}\nÓrdenes pagadas: ${paid} | Pendientes: ${pending}\n\nProductos:\n`;
+  prods.forEach(([name,v])=>txt+=`  ${name}: ${v.qty} uds / $${v.revenue.toFixed(0)}\n`);
+  navigator.clipboard.writeText(txt).then(()=>showToast('📋 Resumen copiado'));
+}
+function printCorte(){ window.print(); }
+
+// ===== NAVIGATION =====
+function switchPage(btn){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const page=btn.dataset.page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('page-'+page).classList.add('on');
+  document.getElementById('mainScroll').scrollTop=0;
+  if(page==='analytics') loadAnalytics();
+  if(page==='corte') loadCorte();
+}
+
+// ===== SOUND =====
+function playDing(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [880,1100,1320].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=freq;
+      const t=ctx.currentTime+i*0.12;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.3,t+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      osc.start(t); osc.stop(t+0.4);
+    });
+  } catch(e){}
+}
+
+// ===== UTILS =====
+function timeSince(iso){
+  try{
+    const d=Math.floor((Date.now()-new Date(iso))/1000);
+    if(isNaN(d)||d<0) return '—';
+    if(d<60) return d+'s';if(d<3600) return Math.floor(d/60)+'min';return Math.floor(d/3600)+'h';
+  }catch(e){ return '—'; }
+}
+let bellNew=0;
+function showBellBadge(){
+  bellNew++;
+  const b=document.getElementById('bellBadge');
+  b.textContent=bellNew; b.classList.add('show');
+}
+document.getElementById('bellBtn').addEventListener('click',()=>{
+  bellNew=0; document.getElementById('bellBadge').textContent='0';
+  document.getElementById('bellBadge').classList.remove('show');
+});
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+// Refresh every 60s as backup
+setInterval(async()=>{ if(document.getElementById('appPage').classList.contains('on')){ await loadOrders(); renderOrdersList(); updateCounts(); } },60000);
+
+</script>
+</body>
+</html>
