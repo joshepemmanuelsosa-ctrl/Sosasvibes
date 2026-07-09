@@ -785,6 +785,62 @@ const CATS = {micheladas:'🦐 Micheladas',cervezas:'🍺 Cervezas',cocktails:'�
 const splashDur = window.matchMedia('(prefers-reduced-motion:reduce)').matches ? 1200 : 4500;
 
 // ---- LOAD ON SPLASH ----
+// ---- SESIÓN PERSISTENTE (sobrevive cierres del navegador) ----
+const SV_KEY='sv_session_v1';
+function saveSession(){
+  try{
+    if(currentOrderId) localStorage.setItem(SV_KEY, JSON.stringify({orderId:currentOrderId, table:selectedTable}));
+  }catch(e){}
+}
+function clearSession(){ try{ localStorage.removeItem(SV_KEY); }catch(e){} }
+
+async function tryRestoreSession(){
+  let s=null;
+  try{ s=JSON.parse(localStorage.getItem(SV_KEY)||'null'); }catch(e){ clearSession(); return false; }
+  if(!s || !s.orderId) return false;
+  let ord=null;
+  try{
+    const {data,error}=await sb.from('orders').select('*').eq('id',s.orderId).single();
+    if(error) throw error;
+    ord=data;
+  }catch(e){ clearSession(); return false; }
+  // Solo restaurar cuentas vivas
+  if(!ord || ord.payment_status==='pagado' || ord.status==='cancelado'){ clearSession(); return false; }
+
+  // Restaurar mesa y revelar el menú
+  const t=s.table||{id:ord.table_id,label:ord.table_label,type:'mesa'};
+  pickTable(t.id, t.label||ord.table_label, t.type||'mesa');
+
+  // Restaurar estado de la orden
+  currentOrderId=ord.id;
+  let label='Orden #'+ord.order_number;
+  if(ord.pass_number){ label+=' · Pase #'+ord.pass_number; document.getElementById('passNum').textContent=ord.pass_number; }
+  document.getElementById('smNum').textContent=label;
+  resetPayUI();
+  updateStatusUI(ord.status);
+  showOrderFab();
+  subscribeToOrder(ord.id);
+
+  if(ord.bill_requested) applyBillRequestedUI();
+  if(ord.payment_method){
+    payChosen=ord.payment_method;
+    document.querySelectorAll('.sm-pay-btn').forEach(b=>b.classList.toggle('sel',b.dataset.method===ord.payment_method));
+    const req=document.getElementById('payRequiredMsg'); if(req) req.style.display='none';
+    if(ord.payment_method==='transferencia') document.getElementById('transferBox').classList.add('show');
+    document.getElementById('tipBlock').classList.add('show');
+  }
+  if(ord.tip_percent!==null && ord.tip_percent!==undefined){
+    tipChosenPct=Number(ord.tip_percent);
+    document.getElementById('tipSummary').textContent = tipChosenPct>0
+      ? `Propina: ${tipChosenPct}% · $${Number(ord.tip_amount||0).toFixed(0)}` : 'Sin propina';
+    document.getElementById('ticketBlock').classList.add('show');
+    renderTicket();
+  }
+  syncPayAlert();
+  showMenuToast('🍺 Recuperamos tu pedido — '+label);
+  return true;
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   // Cargar datos mientras dura splash
   Promise.all([loadProducts(), loadTables()]);
@@ -794,11 +850,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     setTimeout(()=>document.getElementById('si')?.classList.add('shake'),2750);
     setTimeout(()=>document.getElementById('si')?.classList.add('breathe'),3800);
   }
-  setTimeout(()=>{
+  setTimeout(async ()=>{
     const sp = document.getElementById('splash');
     sp.classList.add('gone');
     setTimeout(()=>sp.remove(),700);
-    showTableSelect();
+    const restored = await tryRestoreSession();
+    if(!restored) showTableSelect();
   }, splashDur);
 });
 
@@ -1099,6 +1156,7 @@ async function submitOrder(){
     document.getElementById('successModal').classList.add('on');
     showOrderFab();
     subscribeToOrder(result.id);
+    saveSession();
   } catch(e){
     console.error('submitOrder error:',e);
     alert('Error al enviar. Inténtalo de nuevo.');
@@ -1129,6 +1187,14 @@ function subscribeToOrder(oid){
   sb.channel('order-'+oid)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders',filter:`id=eq.${oid}`},
     payload=>{
+      if(payload.new.status==='cancelado'){
+        clearSession();
+        document.getElementById('successModal').classList.remove('on');
+        hideOrderFab();
+        currentOrderId=null; currentOrderStatus=null; payChosen=null; billRequested=false;
+        showMenuToast('🚫 Tu orden fue cancelada por el personal');
+        return;
+      }
       if(payload.new.bill_requested && !billRequested){ applyBillRequestedUI(); }
       updateStatusUI(payload.new.status);
       if(payload.new.payment_status==='pagado'){ lockOrderAsPaid(); }
@@ -1235,11 +1301,8 @@ function minimizeTracking(){
 }
 
 function orderMore(){
-  if(currentOrderStatus==='listo'||currentOrderStatus==='entregado'){
-    // No debería llegar aquí, pero por si acaso
-    return;
-  }
-  if(currentOrderStatus==='preparando'){
+  if(billRequested) return;
+  if(currentOrderStatus==='preparando'||currentOrderStatus==='listo'||currentOrderStatus==='entregado'){
     // Mostrar warning antes de continuar
     document.getElementById('warningSheet').classList.add('open');
     document.getElementById('ovl').classList.add('on');
@@ -1465,6 +1528,7 @@ function lockOrderAsPaid(){
   document.getElementById('payRequiredMsg').style.display='none';
   document.getElementById('paidBanner').classList.add('show');
   document.getElementById('ticketStamp')?.classList.add('show');
+  clearSession();
   renderTicket();
 }
 function copyAccount(){
@@ -1512,6 +1576,7 @@ async function cancelOrderClient(){
     if(error) throw error;
     document.getElementById('successModal').classList.remove('on');
     hideOrderFab();
+    clearSession();
     currentOrderId=null; currentOrderStatus=null; payChosen=null;
     isAddingToExisting=false;
     document.getElementById('xBanner')?.remove();
