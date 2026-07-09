@@ -96,6 +96,13 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .card-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white);margin-bottom:4px}
 .card-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px}
 .card-foot{display:flex;align-items:center;justify-content:space-between}
+.card-orig{font-size:12px;color:var(--muted);text-decoration:line-through;margin-right:5px}
+.promo-tag{display:inline-block;font-size:9px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.14);border:1px solid rgba(255,140,0,.4);border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:middle}
+#promoBanner{display:none;margin:0 16px 12px;background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,60,0,.08));border:1.5px solid rgba(255,140,0,.4);border-radius:14px;padding:12px 14px}
+#promoBanner.show{display:block}
+.pb-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;color:#FF9D33;margin-bottom:4px}
+.pb-item{font-size:12px;color:var(--white);line-height:1.7}
+.cs-discount{display:flex;justify-content:space-between;font-size:13px;color:#FF9D33;font-weight:700;padding:4px 0}
 .card-price{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime)}
 /* Qty controls */
 .qty{display:flex;align-items:center;gap:0;background:rgba(182,255,26,.1);border:1.5px solid rgba(182,255,26,.4);border-radius:var(--pill)}
@@ -455,6 +462,10 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <div class="ah-s">Restaurante · Bar</div>
     <div id="ahTableBadge" onclick="changeTable()">📍 <span id="ahTableLabel"></span> &nbsp;<span style="color:var(--muted);font-size:10px">cambiar</span></div>
   </header>
+  <div id="promoBanner">
+    <div class="pb-title">🔥 PROMOS DE HOY</div>
+    <div id="pbList"></div>
+  </div>
   <nav class="tabs" id="tabs">
     <button class="tab on" data-cat="micheladas">🦐 Micheladas</button>
     <button class="tab" data-cat="cervezas">🍺 Cervezas</button>
@@ -568,6 +579,9 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
   </div>
   <div class="cs-items" id="csItems"></div>
   <div class="cs-foot">
+    <div class="cs-discount" id="csDiscount" style="display:none">
+      <span>🔥 Promo aplicada</span><span id="csDiscountV">−$0</span>
+    </div>
     <div class="cs-total">
       <span class="cs-total-l">Total</span>
       <span class="cs-total-v" id="csTotal">$0</span>
@@ -662,6 +676,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
           <div class="ticket-items" id="ticketItems">Cargando...</div>
           <div class="ticket-totals">
             <div class="ticket-trow"><span>Subtotal</span><span id="tkSubtotal">$0</span></div>
+            <div class="ticket-trow" id="tkPromoRow" style="display:none;color:#E8890C"><span id="tkPromoLabel">🔥 Promo</span><span id="tkPromoAmount">−$0</span></div>
             <div class="ticket-trow"><span id="tkTipLabel">Propina</span><span id="tkTipAmount">$0</span></div>
             <div class="ticket-trow grand"><span>TOTAL</span><span id="tkGrandTotal">$0</span></div>
           </div>
@@ -775,14 +790,45 @@ window.addEventListener('DOMContentLoaded', async () => {
   }, splashDur);
 });
 
+let activePromos=[], activeCombos=[];
 async function loadProducts(){
-  const {data,error} = await sb.from('products').select('*').eq('available',true).order('sort_order');
+  const [{data,error}, promoRes] = await Promise.all([
+    sb.from('products').select('*').eq('available',true).order('sort_order'),
+    sb.rpc('get_active_promos')
+  ]);
   if(error || !data){ showError(); return; }
+  activePromos=(promoRes.data||[]).filter(p=>p.type==='descuento');
+  activeCombos=(promoRes.data||[]).filter(p=>p.type==='combo');
+  const allById={}; data.forEach(p=>allById[p.id]=p);
+  // Aplicar descuentos % a los precios mostrados (el servidor cobra lo mismo)
+  data.forEach(p=>{
+    const promo=activePromos.filter(x=>x.product_id===p.id).sort((a,b)=>b.discount_pct-a.discount_pct)[0];
+    if(promo){
+      p.orig_price=p.price;
+      p.price=Math.round((p.price*(1-promo.discount_pct/100))*100)/100;
+      p.promo_pct=promo.discount_pct;
+    }
+  });
   products = {};
   data.forEach(p => {
     if(!products[p.category]) products[p.category]=[];
     products[p.category].push(p);
   });
+  // Banner de promos vigentes
+  const banner=document.getElementById('promoBanner');
+  const lines=[];
+  activeCombos.forEach(c=>{
+    const parts=(c.combo_items||[]).map(ci=>{const pr=allById[ci.product_id];return (ci.qty>1?ci.qty+' ':'')+(pr?pr.name:'');}).filter(Boolean);
+    if(parts.length) lines.push(`🎁 ${parts.join(' + ')} por <b>$${Number(c.combo_price).toFixed(0)}</b> — se aplica solo en tu cuenta`);
+  });
+  activePromos.forEach(pr=>{
+    const prod=allById[pr.product_id];
+    if(prod) lines.push(`🔥 ${prod.name} con <b>-${Number(pr.discount_pct)}%</b>`);
+  });
+  if(lines.length){
+    document.getElementById('pbList').innerHTML=lines.map(l=>`<div class="pb-item">${l}</div>`).join('');
+    banner.classList.add('show');
+  } else banner.classList.remove('show');
 }
 
 async function loadTables(){
@@ -844,7 +890,7 @@ function cardHTML(p,i){
       <div class="card-name">${p.name}</div>
       <div class="card-desc">${p.description||''}</div>
       <div class="card-foot">
-        <span class="card-price">$${Number(p.price).toFixed(0)}</span>
+        <span class="card-price">${p.orig_price?`<span class="card-orig">$${Number(p.orig_price).toFixed(0)}</span>`:''}$${Number(p.price).toFixed(0)}${p.promo_pct?`<span class="promo-tag">🔥 -${Number(p.promo_pct)}%</span>`:''}</span>
         ${cardCtrlHTML(p)}
       </div>
     </div>
@@ -876,10 +922,36 @@ function updateCart(pid, delta){
 }
 
 function cartTotal(){ return Object.values(cart).reduce((s,l)=>s+(l.product.price+lineExtra(l))*l.qty,0); }
+function cartComboDiscount(){
+  // Espejo del cálculo del servidor: sets completos de cada combo activo
+  if(!activeCombos.length) return 0;
+  const qtyById={}, priceById={};
+  Object.values(cart).forEach(l=>{
+    qtyById[l.product.id]=(qtyById[l.product.id]||0)+l.qty;
+    priceById[l.product.id]=l.product.price;
+  });
+  let disc=0;
+  activeCombos.forEach(c=>{
+    let minSets=Infinity, base=0, valid=true;
+    (c.combo_items||[]).forEach(ci=>{
+      const req=Math.max(1,ci.qty||1);
+      const have=qtyById[ci.product_id]||0;
+      minSets=Math.min(minSets,Math.floor(have/req));
+      const unit=priceById[ci.product_id];
+      if(unit===undefined){ if(have===0){minSets=0;} else valid=false; }
+      base+=(unit||0)*req;
+    });
+    if(valid&&minSets>0&&isFinite(minSets)&&base>Number(c.combo_price)){
+      disc+=minSets*(base-Number(c.combo_price));
+    }
+  });
+  return disc;
+}
+function cartTotalNet(){ return Math.max(0, cartTotal()-cartComboDiscount()); }
 function cartCount(){ return Object.values(cart).reduce((s,l)=>s+l.qty,0); }
 
 function refreshCartUI(){
-  const n = cartCount(), total = cartTotal();
+  const n = cartCount(), total = cartTotalNet();
   const fab = document.getElementById('cartFab');
   document.getElementById('cfCount').textContent = n;
   document.getElementById('cfTotal').textContent = n>0?` · $${total.toFixed(0)}`:'';
@@ -919,7 +991,11 @@ function renderCartItems(){
       <button class="ci-del" onclick="removeFromCart('${l.lineId}')">✕</button>
     </div>`;
   }).join('');
-  document.getElementById('csTotal').textContent='$'+cartTotal().toFixed(0);
+  const disc=cartComboDiscount();
+  const dRow=document.getElementById('csDiscount');
+  if(disc>0){ dRow.style.display='flex'; document.getElementById('csDiscountV').textContent='−$'+disc.toFixed(0); }
+  else dRow.style.display='none';
+  document.getElementById('csTotal').textContent='$'+cartTotalNet().toFixed(0);
 }
 
 function removeFromCart(lineId){
@@ -1228,14 +1304,14 @@ async function renderTicket(){
   if(!currentOrderId) return;
   try{
     const [{data:ord},{data:items}]=await Promise.all([
-      sb.from('orders').select('order_number,table_label,total,tip_percent,tip_amount,payment_method,created_at').eq('id',currentOrderId).single(),
+      sb.from('orders').select('order_number,table_label,total,tip_percent,tip_amount,payment_method,created_at,discount_amount,promo_note').eq('id',currentOrderId).single(),
       sb.from('order_items').select('product_name,quantity,subtotal').eq('order_id',currentOrderId).order('created_at')
     ]);
     if(!ord) return;
     const PAY_LBL={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia'};
     const tip=Number(ord.tip_amount||0);
     const grand=Number(ord.total)+tip;
-    lastTicketData={ord,items:items||[],tip,grand};
+    lastTicketData={ord,items:items||[],tip,grand,promoDisc:Number(ord.discount_amount||0),promoNote:ord.promo_note};
     document.getElementById('tkOrderNum').textContent='Orden #'+ord.order_number;
     document.getElementById('tkDate').textContent=new Date(ord.created_at).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     document.getElementById('tkTable').textContent='📍 '+(ord.table_label||'—');
@@ -1243,7 +1319,15 @@ async function renderTicket(){
     document.getElementById('ticketItems').innerHTML=(items||[]).map(i=>
       `<div class="ticket-item-row"><span>${i.quantity}x ${i.product_name}</span><span>$${Number(i.subtotal).toFixed(0)}</span></div>`
     ).join('');
-    document.getElementById('tkSubtotal').textContent='$'+Number(ord.total).toFixed(0);
+    const promoDisc=Number(ord.discount_amount||0);
+    const itemsSum=Number(ord.total)+promoDisc;
+    document.getElementById('tkSubtotal').textContent='$'+itemsSum.toFixed(0);
+    const pRow=document.getElementById('tkPromoRow');
+    if(promoDisc>0){
+      pRow.style.display='flex';
+      document.getElementById('tkPromoLabel').textContent='🔥 '+(ord.promo_note||'Promo');
+      document.getElementById('tkPromoAmount').textContent='−$'+promoDisc.toFixed(0);
+    } else pRow.style.display='none';
     document.getElementById('tkTipLabel').textContent=ord.tip_percent?`Propina (${Number(ord.tip_percent)}%)`:'Propina';
     document.getElementById('tkTipAmount').textContent='$'+tip.toFixed(0);
     document.getElementById('tkGrandTotal').textContent='$'+grand.toFixed(0);
@@ -1255,7 +1339,7 @@ function downloadTicket(){
   const {ord,items,tip,grand}=lastTicketData;
   const PAY_LBL={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia'};
   const W=420, lineH=20;
-  const H=240 + items.length*lineH + 130 + (orderLockedPaid?36:0);
+  const H=240 + items.length*lineH + 130 + (orderLockedPaid?36:0) + (lastTicketData.promoDisc>0?22:0);
   const canvas=document.createElement('canvas');
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
@@ -1288,8 +1372,15 @@ function downloadTicket(){
   y+=22;
   ctx.font='13px Arial'; ctx.fillStyle='#333';
   ctx.textAlign='left'; ctx.fillText('Subtotal', 20, y);
-  ctx.textAlign='right'; ctx.fillText('$'+Number(ord.total).toFixed(0), W-20, y);
+  ctx.textAlign='right'; ctx.fillText('$'+(Number(ord.total)+(lastTicketData.promoDisc||0)).toFixed(0), W-20, y);
   y+=22;
+  if(lastTicketData.promoDisc>0){
+    ctx.fillStyle='#E8890C';
+    ctx.textAlign='left'; ctx.fillText('Promo', 20, y);
+    ctx.textAlign='right'; ctx.fillText('-$'+lastTicketData.promoDisc.toFixed(0), W-20, y);
+    ctx.fillStyle='#333';
+    y+=22;
+  }
   ctx.textAlign='left'; ctx.fillText(ord.tip_percent?`Propina (${Number(ord.tip_percent)}%)`:'Propina', 20, y);
   ctx.textAlign='right'; ctx.fillText('$'+tip.toFixed(0), W-20, y);
   y+=14;

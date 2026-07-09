@@ -102,6 +102,8 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .oci-tag.polvo{background:rgba(182,255,26,.1);color:var(--lime);border:1px solid rgba(182,255,26,.25)}
 .oci-tag.limon{background:rgba(255,235,100,.1);color:#FFE566;border:1px solid rgba(255,235,100,.25)}
 .oci-tag.clamato{background:rgba(255,99,71,.14);color:#FF8B6B;border:1px solid rgba(255,99,71,.3)}
+.oci-tag.promo{background:rgba(255,140,0,.15);color:#FF9D33;border:1px solid rgba(255,140,0,.4)}
+.promo-note-tag{display:inline-block;font-size:10px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.12);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px;margin-top:4px}
 .pay-intent{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;margin-top:5px}
 .pay-intent.efectivo{background:rgba(74,222,128,.14);color:#4ADE80;border:1px solid rgba(74,222,128,.35)}
 .pay-intent.tarjeta{background:rgba(91,168,255,.14);color:#5BA8FF;border:1px solid rgba(91,168,255,.35)}
@@ -530,6 +532,7 @@ function orderCardHTML(o){
     const extraBadge=i.is_extra?'<span style="background:rgba(255,194,51,.2);color:#FFC233;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:5px">EXTRA</span>':'';
     const sub=i.subtotal!==undefined?Number(i.subtotal):(Number(i.product_price)+Number(i.escarchado_extra||0))*Number(i.quantity);
     const tags=[];
+    if(i.promo_name) tags.push(`<span class="oci-tag promo">${i.promo_name}</span>`);
     if(i.beer_choice) tags.push(`<span class="oci-tag beer">${BEER_B[i.beer_choice]||i.beer_choice}</span>`);
     if(i.escarchado_choice) tags.push(`<span class="oci-tag esc">${ESC_B[i.escarchado_choice]||'🧂 '+i.escarchado_choice}</span>`);
     if(i.polvo_choice) tags.push(`<span class="oci-tag polvo">${POLVO_B[i.polvo_choice]||'✨ '+i.polvo_choice}</span>`);
@@ -568,6 +571,7 @@ function orderCardHTML(o){
         ${(!paid&&o.payment_method)?`<div class="pay-intent ${o.payment_method}">${PAY_ICO[o.payment_method]} Pagará: ${PAY_LBL[o.payment_method]}</div>`:''}
         ${tipTagHTML}
         ${o.custom_name?`<div class="oc-name-tag">🏷️ ${o.custom_name}</div>`:''}
+        ${Number(o.discount_amount||0)>0?`<div class="promo-note-tag">🔥 ${o.promo_note||'Promo'} </div>`:''}
       </div>
       <div class="oc-right">
         <div class="oc-total">$${grandTotal.toFixed(0)}</div>
