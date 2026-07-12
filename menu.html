@@ -552,6 +552,13 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       <button class="esc-btn" data-val="sin_clamato" onclick="escSelect(this,4)" style="padding:20px 8px">🚫<br>Sin Clamato</button>
     </div>
   </div>
+  <div id="escStepSalsa" class="esc-step" style="display:none">
+    <div class="esc-grid" style="grid-template-columns:1fr">
+      <button class="esc-btn" data-val="bufalo" onclick="escSelect(this,5)" style="padding:18px 8px">🔥<br>Búfalo</button>
+      <button class="esc-btn" data-val="mango_habanero" onclick="escSelect(this,5)" style="padding:18px 8px">🥭<br>Mango Habanero</button>
+      <button class="esc-btn" data-val="bbq" onclick="escSelect(this,5)" style="padding:18px 8px">🍖<br>BBQ</button>
+    </div>
+  </div>
   <!-- Cantidad -->
   <div class="esc-qty" id="escQtyRow" style="display:none">
     <span class="esc-qty-lbl">¿Cuántas iguales así?</span>
@@ -933,7 +940,7 @@ function renderSection(cat){
 
 function productQty(pid){ return Object.values(cart).filter(l=>l.product.id===pid).reduce((s,l)=>s+l.qty,0); }
 function cardCtrlHTML(p){
-  if(p.has_escarchado){
+  if(p.has_escarchado || p.name.toLowerCase().includes('boneless')){
     const q=productQty(p.id);
     const badge=q>0?`<span class="card-incart">✓ ${q}</span>`:'';
     return `${badge}<button class="add-btn" onclick="addConfigured('${p.id}')">+</button>`;
@@ -1137,7 +1144,7 @@ async function submitOrder(){
   const btn = document.getElementById('omConfirm');
   btn.disabled=true; btn.textContent='Enviando...';
   try{
-    const items = Object.values(cart).map(l=>({product_id:l.product.id, quantity:l.qty, escarchado:l.escarchado||null, polvo:l.polvo||null, limon:l.limon||null, clamato:l.clamato||null, beer_choice:l.beerChoice||null}));
+    const items = Object.values(cart).map(l=>({product_id:l.product.id, quantity:l.qty, escarchado:l.escarchado||null, polvo:l.polvo||null, limon:l.limon||null, clamato:l.clamato||null, beer_choice:l.beerChoice||null, salsa:l.salsa||null}));
     const isWalkin = selTable.type==='pase';
     const {data:result,error} = await sb.rpc('place_order',{
       p_table_id: isWalkin ? null : selTable.id,
@@ -1169,7 +1176,7 @@ async function submitExtraItems(){
   const fab = document.getElementById('cartFab');
   fab.style.pointerEvents = 'none';
   try{
-    const items = Object.values(cart).map(l=>({product_id:l.product.id, quantity:l.qty, escarchado:l.escarchado||null, polvo:l.polvo||null, limon:l.limon||null, clamato:l.clamato||null, beer_choice:l.beerChoice||null}));
+    const items = Object.values(cart).map(l=>({product_id:l.product.id, quantity:l.qty, escarchado:l.escarchado||null, polvo:l.polvo||null, limon:l.limon||null, clamato:l.clamato||null, beer_choice:l.beerChoice||null, salsa:l.salsa||null}));
     const {error} = await sb.rpc('add_extra_items',{p_order_id: currentOrderId, p_items: items});
     if(error) throw error;
     cart = {};
@@ -1613,9 +1620,10 @@ const ESC_STEP_TITLES = {1:'🧂 Elige tu Escarchado',2:'✨ Tipo de Polvo',3:'�
 
 const BEER_LABELS_F={corona:'Corona',victoria:'Victoria'};
 const CLAMATO_LABELS={con_clamato:'Con Clamato',sin_clamato:'Sin Clamato'};
-const STEP_EL={beer:'escStep0',esc:'escStep1',polvo:'escStep2',clamato:'escStep4',limon:'escStep3'};
-const STEP_TITLE={beer:'🍺 Elige tu Cerveza',esc:'🧂 Elige tu Escarchado',polvo:'✨ Tipo de Polvo',clamato:'🍅 ¿Con Clamato?',limon:'🍋 ¿Con o sin sal?'};
-const NUM2KEY={0:'beer',1:'esc',2:'polvo',3:'limon',4:'clamato'};
+const STEP_EL={beer:'escStep0',esc:'escStep1',polvo:'escStep2',clamato:'escStep4',limon:'escStep3',salsa:'escStepSalsa'};
+const SALSA_LABELS={bufalo:'Salsa Búfalo',mango_habanero:'Salsa Mango Habanero',bbq:'Salsa BBQ'};
+const STEP_TITLE={beer:'🍺 Elige tu Cerveza',esc:'🧂 Elige tu Escarchado',polvo:'✨ Tipo de Polvo',clamato:'🍅 ¿Con Clamato?',limon:'🍋 ¿Con o sin sal?',salsa:'🌶️ ¿Con qué salsa los quieres?'};
+const NUM2KEY={0:'beer',1:'esc',2:'polvo',3:'limon',4:'clamato',5:'salsa'};
 let escPendingProductId=null;
 let escSteps=[], escStepIdx=0, escQty=1;
 let escSel={beer:null,esc:null,polvo:null,clamato:null,limon:null};
@@ -1628,7 +1636,9 @@ function needsBeerChoice(p){
   const n=(p.name||'').toLowerCase();
   return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
 }
+function isBonelessP(p){ return p.name.toLowerCase().includes('boneless'); }
 function buildEscSteps(p){
+  if(isBonelessP(p)) return ['salsa'];
   const steps=[];
   if(needsBeerChoice(p)) steps.push('beer');
   steps.push('esc');
@@ -1646,7 +1656,7 @@ function openEscModal(pid){
   escPendingProductId=pid;
   escSteps=buildEscSteps(p);
   escStepIdx=0; escQty=1;
-  escSel={beer:null,esc:null,polvo:null,clamato:null,limon:null};
+  escSel={beer:null,esc:null,polvo:null,clamato:null,limon:null,salsa:null};
   document.getElementById('escSubtitle').textContent=p.name;
   const az=document.getElementById('escAzucar');
   if(az) az.style.display=p.name.toLowerCase().includes('mojito')?'block':'none';
@@ -1705,7 +1715,9 @@ function closeEscModal(){
 
 function lineExtra(l){ return (l.polvo==='truena_pop'?15:0)+(l.clamato==='con_clamato'?10:0); }
 function confirmEsc(){
-  if(!escPendingProductId||!escSel.esc) return;
+  if(!escPendingProductId) return;
+  if(escSteps.includes('esc')&&!escSel.esc) return;
+  if(escSteps.includes('salsa')&&!escSel.salsa) return;
   const pid=escPendingProductId;
   const p=Object.values(products).flat().find(x=>x.id===pid);
   if(!p) return;
@@ -1715,9 +1727,10 @@ function confirmEsc(){
   if(escSel.polvo) parts.push(POLVO_LABELS[escSel.polvo]||escSel.polvo);
   if(escSel.clamato) parts.push(CLAMATO_LABELS[escSel.clamato]||escSel.clamato);
   if(escSel.limon) parts.push(LIMON_LABELS[escSel.limon]||escSel.limon);
+  if(escSel.salsa) parts.push(SALSA_LABELS[escSel.salsa]||escSel.salsa);
   const fullLabel=parts.join(' · ');
   const lineId=pid+'::'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  cart[lineId]={lineId,product:p,qty:escQty,escarchado:escSel.esc,polvo:escSel.polvo,clamato:escSel.clamato,limon:escSel.limon,escarchadoFull:fullLabel,beerChoice:escSel.beer};
+  cart[lineId]={lineId,product:p,qty:escQty,escarchado:escSel.esc,polvo:escSel.polvo,clamato:escSel.clamato,limon:escSel.limon,salsa:escSel.salsa,escarchadoFull:fullLabel,beerChoice:escSel.beer};
   closeEscModal();
   refreshCartUI();
   refreshCardBadge(pid);

@@ -374,16 +374,24 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       <div class="bc-lbl">Cerveza</div>
       <div class="bc-grid" id="bcBeer"></div>
     </div>
-    <div class="bc-lbl">Escarchado</div>
-    <div class="bc-grid" id="bcEsc"></div>
-    <div class="bc-lbl">Polvo</div>
-    <div class="bc-grid" id="bcPolvo"></div>
+    <div id="bcEscSec">
+      <div class="bc-lbl">Escarchado</div>
+      <div class="bc-grid" id="bcEsc"></div>
+      <div class="bc-lbl">Polvo</div>
+      <div class="bc-grid" id="bcPolvo"></div>
+    </div>
     <div id="bcClamatoSec">
       <div class="bc-lbl">Clamato</div>
       <div class="bc-grid" id="bcClamato"></div>
     </div>
-    <div class="bc-lbl">Sal / Limón</div>
-    <div class="bc-grid" id="bcLimon"></div>
+    <div id="bcLimonSec">
+      <div class="bc-lbl">Sal / Limón</div>
+      <div class="bc-grid" id="bcLimon"></div>
+    </div>
+    <div id="bcSalsaSec" style="display:none">
+      <div class="bc-lbl">Salsa</div>
+      <div class="bc-grid" id="bcSalsa"></div>
+    </div>
     <div class="bc-qty">
       <button class="bc-qbtn" onclick="bcQty(-1)">−</button>
       <span class="bc-qnum" id="bcQtyNum">1</span>
@@ -587,6 +595,7 @@ function orderCardHTML(o){
     const sub=i.subtotal!==undefined?Number(i.subtotal):(Number(i.product_price)+Number(i.escarchado_extra||0))*Number(i.quantity);
     const tags=[];
     if(i.promo_name) tags.push(`<span class="oci-tag promo">${i.promo_name}</span>`);
+    if(i.salsa_choice) tags.push(`<span class="oci-tag esc">🌶️ ${({bufalo:'Búfalo',mango_habanero:'Mango Habanero',bbq:'BBQ'})[i.salsa_choice]||i.salsa_choice}</span>`);
     if(i.beer_choice) tags.push(`<span class="oci-tag beer">${BEER_B[i.beer_choice]||i.beer_choice}</span>`);
     if(i.escarchado_choice) tags.push(`<span class="oci-tag esc">${ESC_B[i.escarchado_choice]||'🧂 '+i.escarchado_choice}</span>`);
     if(i.polvo_choice) tags.push(`<span class="oci-tag polvo">${POLVO_B[i.polvo_choice]||'✨ '+i.polvo_choice}</span>`);
@@ -671,7 +680,8 @@ const BC_OPTS={
   esc:[['chamoy','Chamoy'],['tamarindo','Tamarindo'],['sandia','Sandía'],['frutos_rojos','Frutos Rojos'],['mango','Mango'],['mora_azul','Mora Azul'],['fresa_chamoy','Fresa Chamoy']],
   polvo:[['sin_polvo','Sin polvo'],['mora','Mora'],['tajin','Tajín'],['miguelito','Miguelito'],['ajonjoli','Ajonjolí'],['azucar','Azúcar'],['truena_pop','Truena Pop +$15']],
   clamato:[['sin_clamato','Sin Clamato'],['con_clamato','Con Clamato +$10']],
-  limon:[['sal_limon','Sal y limón'],['solo_sal','Solo sal'],['solo_limon','Solo limón'],['sin_sal_limon','Sin sal ni limón']]
+  limon:[['sal_limon','Sal y limón'],['solo_sal','Solo sal'],['solo_limon','Solo limón'],['sin_sal_limon','Sin sal ni limón']],
+  salsa:[['bufalo','🔥 Búfalo'],['mango_habanero','🥭 Mango Habanero'],['bbq','🍖 BBQ']]
 };
 let bcState=null;
 function bcNeedsBeer(p){
@@ -679,11 +689,15 @@ function bcNeedsBeer(p){
   return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
 }
 function openBarCfg(product, onConfirm){
-  const hasClamato = product.category==='micheladas' && !product.name.toLowerCase().includes('cubana');
+  const isBoneless = product.name.toLowerCase().includes('boneless');
+  const hasClamato = !isBoneless && product.category==='micheladas' && !product.name.toLowerCase().includes('cubana');
   bcState={product, onConfirm, qty:1,
-    beer:null, esc:null, polvo:'sin_polvo', clamato:'sin_clamato', limon:'sal_limon',
-    needsBeer:bcNeedsBeer(product), hasClamato};
+    beer:null, esc:null, polvo:'sin_polvo', clamato:'sin_clamato', limon:'sal_limon', salsa:null,
+    needsBeer:!isBoneless&&bcNeedsBeer(product), hasClamato, isBoneless};
   document.getElementById('bcClamatoSec').style.display=hasClamato?'block':'none';
+  document.getElementById('bcEscSec').style.display=isBoneless?'none':'block';
+  document.getElementById('bcLimonSec').style.display=isBoneless?'none':'block';
+  document.getElementById('bcSalsaSec').style.display=isBoneless?'block':'none';
   document.getElementById('bcTitle').textContent=product.name;
   document.getElementById('bcQtyNum').textContent='1';
   document.getElementById('bcBeerSec').style.display=bcState.needsBeer?'block':'none';
@@ -692,7 +706,7 @@ function openBarCfg(product, onConfirm){
       `<button class="bc-opt ${bcState[key==='beer'?'beer':key]===v?'sel':''}" onclick="bcPick('${key}','${v}',this)">${l}</button>`).join('');
   };
   grid('bcBeer','beer'); grid('bcEsc','esc'); grid('bcPolvo','polvo');
-  grid('bcClamato','clamato'); grid('bcLimon','limon');
+  grid('bcClamato','clamato'); grid('bcLimon','limon'); grid('bcSalsa','salsa');
   bcUpdatePrice(); bcCheckReady();
   document.getElementById('barCfgModal').classList.add('on');
 }
@@ -716,7 +730,9 @@ function bcUpdatePrice(){
     `$${unit.toFixed(0)} c/u${bcState.qty>1?' · Total $'+(unit*bcState.qty).toFixed(0):''}`;
 }
 function bcCheckReady(){
-  const ready=!!bcState.esc && (!bcState.needsBeer||!!bcState.beer);
+  const ready = bcState.isBoneless
+    ? !!bcState.salsa
+    : (!!bcState.esc && (!bcState.needsBeer||!!bcState.beer));
   document.getElementById('bcAddBtn').disabled=!ready;
 }
 function closeBarCfg(){
@@ -725,9 +741,14 @@ function closeBarCfg(){
 }
 function confirmBarCfg(){
   if(!bcState) return;
-  const cfg={escarchado:bcState.esc, polvo:bcState.polvo, limon:bcState.limon, quantity:bcState.qty};
-  if(bcState.hasClamato) cfg.clamato=bcState.clamato;
-  if(bcState.needsBeer) cfg.beer_choice=bcState.beer;
+  let cfg;
+  if(bcState.isBoneless){
+    cfg={salsa:bcState.salsa, quantity:bcState.qty};
+  } else {
+    cfg={escarchado:bcState.esc, polvo:bcState.polvo, limon:bcState.limon, quantity:bcState.qty};
+    if(bcState.hasClamato) cfg.clamato=bcState.clamato;
+    if(bcState.needsBeer) cfg.beer_choice=bcState.beer;
+  }
   const cb=bcState.onConfirm, p=bcState.product;
   closeBarCfg();
   cb(p, cfg);
@@ -784,7 +805,7 @@ function prodRow(p,orderId,isSola){
 }
 async function addItemToOrder(orderId, productId){
   const prod=products.find(x=>x.id===productId);
-  if(prod && prod.has_escarchado){
+  if(prod && (prod.has_escarchado || prod.name.toLowerCase().includes('boneless'))){
     openBarCfg(prod, (p,cfg)=>sendItemToOrder(orderId, {product_id:p.id, ...cfg}));
     return;
   }
@@ -882,7 +903,7 @@ let moLineSeq=0;
 function addToMoCart(pid){
   const p=products.find(x=>x.id===pid);
   if(!p) return;
-  if(p.has_escarchado){
+  if(p.has_escarchado || p.name.toLowerCase().includes('boneless')){
     openBarCfg(p, (prod,cfg)=>{
       const key='cfg'+(++moLineSeq);
       moCart[key]={key, product:prod, qty:cfg.quantity||1, cfg};
@@ -904,6 +925,7 @@ function moCfgTags(cfg){
   if(cfg.polvo&&cfg.polvo!=='sin_polvo') parts.push(cfg.polvo==='truena_pop'?'truena pop':cfg.polvo);
   if(cfg.clamato==='con_clamato') parts.push('clamato');
   if(cfg.limon&&cfg.limon!=='sal_limon') parts.push(L[cfg.limon]);
+  if(cfg.salsa) parts.push('salsa '+cfg.salsa.replace('_',' '));
   return parts.length?`<div style="font-size:9.5px;color:var(--muted);margin-top:1px">${parts.join(' · ')}</div>`:'';
 }
 function moLineExtra(c){
@@ -932,7 +954,7 @@ async function submitManualOrder(){
   const existing = isWalkin ? null : findActiveOrderForTable(moSelTable.id);
   btn.disabled=true; btn.textContent=existing?'Agregando...':'Creando...';
   try{
-    const items=Object.values(moCart).map(c=>({product_id:c.product.id, quantity:c.qty, ...(c.cfg?{escarchado:c.cfg.escarchado, polvo:c.cfg.polvo, limon:c.cfg.limon, clamato:c.cfg.clamato, beer_choice:c.cfg.beer_choice}:{})}));
+    const items=Object.values(moCart).map(c=>({product_id:c.product.id, quantity:c.qty, ...(c.cfg?{escarchado:c.cfg.escarchado, polvo:c.cfg.polvo, limon:c.cfg.limon, clamato:c.cfg.clamato, beer_choice:c.cfg.beer_choice, salsa:c.cfg.salsa}:{})}));
     let result;
     if(existing){
       const {data,error}=await sb.rpc('add_extra_items',{p_order_id:existing.id,p_items:items});
