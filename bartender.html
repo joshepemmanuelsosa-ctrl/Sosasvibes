@@ -103,6 +103,23 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .oci-tag.limon{background:rgba(255,235,100,.1);color:#FFE566;border:1px solid rgba(255,235,100,.25)}
 .oci-tag.clamato{background:rgba(255,99,71,.14);color:#FF8B6B;border:1px solid rgba(255,99,71,.3)}
 .oci-tag.promo{background:rgba(255,140,0,.15);color:#FF9D33;border:1px solid rgba(255,140,0,.4)}
+/* Modal configuración de michelada (bartender) */
+#barCfgModal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.9);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#barCfgModal.on{display:flex}
+.bc-box{background:#0E0E0E;border:1.5px solid rgba(255,194,51,.35);border-radius:18px;padding:18px;max-width:400px;width:100%;margin:auto}
+.bc-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--white);margin-bottom:2px}
+.bc-price{font-size:12px;color:var(--lime);font-weight:700;margin-bottom:10px}
+.bc-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:10px 0 5px}
+.bc-grid{display:flex;flex-wrap:wrap;gap:6px}
+.bc-opt{padding:8px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--white);font:600 11.5px 'Inter',sans-serif;cursor:pointer}
+.bc-opt.sel{background:var(--beer);color:#0A0A00;border-color:var(--beer);font-weight:800}
+.bc-qty{display:flex;align-items:center;gap:14px;justify-content:center;margin:14px 0 4px}
+.bc-qbtn{width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:var(--white);font-size:18px;font-weight:800;cursor:pointer}
+.bc-qnum{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--white);min-width:30px;text-align:center}
+.bc-actions{display:flex;gap:8px;margin-top:12px}
+.bc-cancel{flex:1;padding:12px;border-radius:11px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--muted);font:700 12px 'Inter',sans-serif;cursor:pointer}
+.bc-add{flex:2;padding:12px;border-radius:11px;border:none;background:var(--lime);color:#0A0A00;font:800 13px 'Inter',sans-serif;cursor:pointer}
+.bc-add:disabled{opacity:.45}
 .bill-badge{display:inline-block;font-size:10px;font-weight:900;color:#0A0A00;background:var(--beer);border-radius:20px;padding:3px 10px;margin-left:6px;animation:billpulse 1s ease-in-out infinite}
 @keyframes billpulse{0%,100%{opacity:1}50%{opacity:.55}}
 .promo-note-tag{display:inline-block;font-size:10px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.12);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px;margin-top:4px}
@@ -348,6 +365,33 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <button class="bnav-btn" data-page="analytics" onclick="switchPage(this)"><span>📊</span>Analytics</button>
     <button class="bnav-btn" data-page="corte" onclick="switchPage(this)"><span>💰</span>Corte</button>
   </nav>
+</div>
+<div id="barCfgModal">
+  <div class="bc-box">
+    <div class="bc-title" id="bcTitle">Michelada</div>
+    <div class="bc-price" id="bcPrice"></div>
+    <div id="bcBeerSec" style="display:none">
+      <div class="bc-lbl">Cerveza</div>
+      <div class="bc-grid" id="bcBeer"></div>
+    </div>
+    <div class="bc-lbl">Escarchado</div>
+    <div class="bc-grid" id="bcEsc"></div>
+    <div class="bc-lbl">Polvo</div>
+    <div class="bc-grid" id="bcPolvo"></div>
+    <div class="bc-lbl">Clamato</div>
+    <div class="bc-grid" id="bcClamato"></div>
+    <div class="bc-lbl">Sal / Limón</div>
+    <div class="bc-grid" id="bcLimon"></div>
+    <div class="bc-qty">
+      <button class="bc-qbtn" onclick="bcQty(-1)">−</button>
+      <span class="bc-qnum" id="bcQtyNum">1</span>
+      <button class="bc-qbtn" onclick="bcQty(1)">+</button>
+    </div>
+    <div class="bc-actions">
+      <button class="bc-cancel" onclick="closeBarCfg()">Cancelar</button>
+      <button class="bc-add" id="bcAddBtn" onclick="confirmBarCfg()">Agregar</button>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -619,6 +663,72 @@ function toggleCard(id){
     }
   }
 }
+// ===== CONFIGURADOR DE MICHELADAS (bartender) =====
+const BC_OPTS={
+  beer:[['corona','Corona'],['victoria','Victoria']],
+  esc:[['chamoy','Chamoy'],['tamarindo','Tamarindo'],['sandia','Sandía'],['frutos_rojos','Frutos Rojos'],['mango','Mango'],['mora_azul','Mora Azul'],['fresa_chamoy','Fresa Chamoy']],
+  polvo:[['sin_polvo','Sin polvo'],['mora','Mora'],['tajin','Tajín'],['miguelito','Miguelito'],['ajonjoli','Ajonjolí'],['azucar','Azúcar'],['truena_pop','Truena Pop +$15']],
+  clamato:[['sin_clamato','Sin Clamato'],['con_clamato','Con Clamato +$5']],
+  limon:[['sal_limon','Sal y limón'],['solo_sal','Solo sal'],['solo_limon','Solo limón'],['sin_sal_limon','Sin sal ni limón']]
+};
+let bcState=null;
+function bcNeedsBeer(p){
+  const n=p.name.toLowerCase();
+  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
+}
+function openBarCfg(product, onConfirm){
+  bcState={product, onConfirm, qty:1,
+    beer:null, esc:null, polvo:'sin_polvo', clamato:'sin_clamato', limon:'sal_limon',
+    needsBeer:bcNeedsBeer(product)};
+  document.getElementById('bcTitle').textContent=product.name;
+  document.getElementById('bcQtyNum').textContent='1';
+  document.getElementById('bcBeerSec').style.display=bcState.needsBeer?'block':'none';
+  const grid=(id,key)=>{
+    document.getElementById(id).innerHTML=BC_OPTS[key].map(([v,l])=>
+      `<button class="bc-opt ${bcState[key==='beer'?'beer':key]===v?'sel':''}" onclick="bcPick('${key}','${v}',this)">${l}</button>`).join('');
+  };
+  grid('bcBeer','beer'); grid('bcEsc','esc'); grid('bcPolvo','polvo');
+  grid('bcClamato','clamato'); grid('bcLimon','limon');
+  bcUpdatePrice(); bcCheckReady();
+  document.getElementById('barCfgModal').classList.add('on');
+}
+function bcPick(key,val,btn){
+  bcState[key]=val;
+  btn.parentElement.querySelectorAll('.bc-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  bcUpdatePrice(); bcCheckReady();
+}
+function bcQty(d){
+  bcState.qty=Math.max(1,Math.min(20,bcState.qty+d));
+  document.getElementById('bcQtyNum').textContent=bcState.qty;
+  bcUpdatePrice();
+}
+function bcExtra(){
+  return (bcState.polvo==='truena_pop'?15:0)+(bcState.clamato==='con_clamato'?5:0);
+}
+function bcUpdatePrice(){
+  const unit=Number(bcState.product.price)+bcExtra();
+  document.getElementById('bcPrice').textContent=
+    `$${unit.toFixed(0)} c/u${bcState.qty>1?' · Total $'+(unit*bcState.qty).toFixed(0):''}`;
+}
+function bcCheckReady(){
+  const ready=!!bcState.esc && (!bcState.needsBeer||!!bcState.beer);
+  document.getElementById('bcAddBtn').disabled=!ready;
+}
+function closeBarCfg(){
+  document.getElementById('barCfgModal').classList.remove('on');
+  bcState=null;
+}
+function confirmBarCfg(){
+  if(!bcState) return;
+  const cfg={escarchado:bcState.esc, polvo:bcState.polvo, limon:bcState.limon, quantity:bcState.qty};
+  if(bcState.product.category==='micheladas') cfg.clamato=bcState.clamato;
+  if(bcState.needsBeer) cfg.beer_choice=bcState.beer;
+  const cb=bcState.onConfirm, p=bcState.product;
+  closeBarCfg();
+  cb(p, cfg);
+}
+
 // ===== EDICIÓN DE ORDEN =====
 async function removeOrderItem(itemId, orderId){
   if(!confirm('¿Eliminar este producto de la orden? Su inventario se devolverá automáticamente.')) return;
@@ -669,10 +779,18 @@ function prodRow(p,orderId,isSola){
   </div>`;
 }
 async function addItemToOrder(orderId, productId){
+  const prod=products.find(x=>x.id===productId);
+  if(prod && prod.has_escarchado){
+    openBarCfg(prod, (p,cfg)=>sendItemToOrder(orderId, {product_id:p.id, ...cfg}));
+    return;
+  }
+  sendItemToOrder(orderId, {product_id:productId, quantity:1});
+}
+async function sendItemToOrder(orderId, item){
   try{
-    const {data,error}=await sb.rpc('bartender_add_items',{p_order_id:orderId,p_items:[{product_id:productId,quantity:1}]});
+    const {data,error}=await sb.rpc('bartender_add_items',{p_order_id:orderId,p_items:[item]});
     if(error) throw error;
-    const p=products.find(x=>x.id===productId);
+    const p=products.find(x=>x.id===item.product_id);
     showToast('✅ '+(p?p.name:'Producto')+' agregado');
     await loadOrders(); renderOrdersList(); updateCounts();
     // Reabrir tarjeta y panel para seguir agregando
@@ -756,22 +874,46 @@ function filterProducts(){
     </div>`).join('');
 }
 function renderManualProds(){ filterProducts(); }
+let moLineSeq=0;
 function addToMoCart(pid){
   const p=products.find(x=>x.id===pid);
   if(!p) return;
-  if(!moCart[pid]) moCart[pid]={product:p,qty:0};
+  if(p.has_escarchado){
+    openBarCfg(p, (prod,cfg)=>{
+      const key='cfg'+(++moLineSeq);
+      moCart[key]={key, product:prod, qty:cfg.quantity||1, cfg};
+      renderMoCart(); checkMoSubmit();
+    });
+    return;
+  }
+  if(!moCart[pid]) moCart[pid]={key:pid, product:p, qty:0};
   moCart[pid].qty++;
   renderMoCart(); checkMoSubmit();
 }
-function removeMoCart(pid){ delete moCart[pid]; renderMoCart(); checkMoSubmit(); }
+function removeMoCart(key){ delete moCart[key]; renderMoCart(); checkMoSubmit(); }
+function moCfgTags(cfg){
+  if(!cfg) return '';
+  const L={sal_limon:'sal+limón',solo_sal:'solo sal',solo_limon:'solo limón',sin_sal_limon:'sin sal/limón'};
+  const parts=[];
+  if(cfg.beer_choice) parts.push(cfg.beer_choice);
+  if(cfg.escarchado) parts.push(cfg.escarchado.replace('_',' '));
+  if(cfg.polvo&&cfg.polvo!=='sin_polvo') parts.push(cfg.polvo==='truena_pop'?'truena pop':cfg.polvo);
+  if(cfg.clamato==='con_clamato') parts.push('clamato');
+  if(cfg.limon&&cfg.limon!=='sal_limon') parts.push(L[cfg.limon]);
+  return parts.length?`<div style="font-size:9.5px;color:var(--muted);margin-top:1px">${parts.join(' · ')}</div>`:'';
+}
+function moLineExtra(c){
+  if(!c.cfg) return 0;
+  return (c.cfg.polvo==='truena_pop'?15:0)+(c.cfg.clamato==='con_clamato'?5:0);
+}
 function renderMoCart(){
   const items=Object.values(moCart);
   const sec=document.getElementById('moCartSection');
   const el=document.getElementById('moCartItems');
   if(!items.length){sec.style.display='none';return}
   sec.style.display='block';
-  const total=items.reduce((s,c)=>s+c.product.price*c.qty,0);
-  el.innerHTML=items.map(c=>`<div class="mo-ci"><div class="mo-ci-l">${c.qty}x ${c.product.name}</div><div class="mo-ci-r"><span class="mo-ci-price">$${(c.product.price*c.qty).toFixed(0)}</span><button class="mo-ci-del" onclick="removeMoCart('${c.product.id}')">✕</button></div></div>`).join('');
+  const total=items.reduce((s,c)=>s+(Number(c.product.price)+moLineExtra(c))*c.qty,0);
+  el.innerHTML=items.map(c=>`<div class="mo-ci"><div class="mo-ci-l">${c.qty}x ${c.product.name}${moCfgTags(c.cfg)}</div><div class="mo-ci-r"><span class="mo-ci-price">$${((Number(c.product.price)+moLineExtra(c))*c.qty).toFixed(0)}</span><button class="mo-ci-del" onclick="removeMoCart('${c.key}')">✕</button></div></div>`).join('');
   document.getElementById('moTotal').textContent='$'+total.toFixed(0);
 }
 function checkMoSubmit(){ document.getElementById('moSubmit').disabled=!moSelTable||!Object.keys(moCart).length; }
@@ -786,7 +928,7 @@ async function submitManualOrder(){
   const existing = isWalkin ? null : findActiveOrderForTable(moSelTable.id);
   btn.disabled=true; btn.textContent=existing?'Agregando...':'Creando...';
   try{
-    const items=Object.values(moCart).map(c=>({product_id:c.product.id, quantity:c.qty}));
+    const items=Object.values(moCart).map(c=>({product_id:c.product.id, quantity:c.qty, ...(c.cfg?{escarchado:c.cfg.escarchado, polvo:c.cfg.polvo, limon:c.cfg.limon, clamato:c.cfg.clamato, beer_choice:c.cfg.beer_choice}:{})}));
     let result;
     if(existing){
       const {data,error}=await sb.rpc('add_extra_items',{p_order_id:existing.id,p_items:items});

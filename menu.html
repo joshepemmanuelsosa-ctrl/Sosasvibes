@@ -1626,7 +1626,7 @@ function needsFullFlow(p){
 }
 function needsBeerChoice(p){
   const n=(p.name||'').toLowerCase();
-  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra');
+  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
 }
 function buildEscSteps(p){
   const steps=[];

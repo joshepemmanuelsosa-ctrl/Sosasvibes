@@ -197,26 +197,6 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .cr-total.ok{background:rgba(182,255,26,.08);color:var(--lime);border:1px solid rgba(182,255,26,.25)}
 .count-hist{font-size:11px;color:var(--muted);padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between}
 .count-hist .miss{color:var(--red);font-weight:700}
-/* Promos */
-.promo-form{background:var(--e);border-radius:14px;padding:14px;border:1px solid rgba(255,140,0,.25);margin-bottom:14px}
-.promo-form label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin:8px 0 4px}
-.promo-form input,.promo-form select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 13px 'Inter',sans-serif;padding:9px 10px;outline:none}
-.promo-form select option{background:#111}
-.day-chips{display:flex;gap:5px;flex-wrap:wrap}
-.day-chip{flex:1;min-width:36px;padding:8px 0;text-align:center;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--muted);font:700 11px 'Inter',sans-serif;cursor:pointer}
-.day-chip.on{background:rgba(255,140,0,.2);color:#FF9D33;border-color:rgba(255,140,0,.5)}
-.combo-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
-.combo-row select{flex:1}
-.combo-row input{width:52px;text-align:center}
-.combo-del{background:rgba(255,30,30,.12);color:var(--red);border:1px solid rgba(255,30,30,.3);border-radius:7px;font-weight:800;padding:6px 10px;cursor:pointer}
-.promo-submit{width:100%;margin-top:12px;padding:13px;border:none;border-radius:11px;background:#FF8C00;color:#000;font:800 13px 'Inter',sans-serif;cursor:pointer}
-.promo-card{background:var(--e);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.promo-card.live{border-color:rgba(255,140,0,.45)}
-.promo-info{flex:1;min-width:0}
-.promo-name{font-size:13px;font-weight:700;color:var(--white)}
-.promo-meta{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
-.promo-live{font-size:9px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.14);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px}
-.promo-del{background:rgba(255,30,30,.12);color:var(--red);border:1px solid rgba(255,30,30,.3);border-radius:8px;font-size:11px;font-weight:800;padding:6px 10px;cursor:pointer}
 .inv-countable{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-top:6px}
 
 /* PRODUCTOS TOGGLE */
@@ -355,45 +335,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     </div>
     <!-- PRODUCTOS -->
     <div class="page" id="page-prods">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#FF8C00;margin-bottom:4px">🔥 PROMOCIONES</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Se activan y desactivan solas según día y horario. El descuento lo aplica el servidor — nadie lo puede manipular.</div>
-      <div class="promo-form">
-        <label>Nombre de la promo</label>
-        <input type="text" id="prName" placeholder="Ej. Happy Hour Micheladas">
-        <label>Tipo</label>
-        <select id="prType" onchange="prTypeChanged()">
-          <option value="descuento">Descuento % en un producto</option>
-          <option value="combo">Combo a precio fijo</option>
-        </select>
-        <div id="prDescuentoFields">
-          <label>Producto</label>
-          <select id="prProduct"></select>
-          <label>Descuento %</label>
-          <input type="number" id="prPct" placeholder="Ej. 20" min="1" max="99">
-        </div>
-        <div id="prComboFields" style="display:none">
-          <label>Productos del combo</label>
-          <div id="comboRows"></div>
-          <button class="oe-btn" type="button" onclick="addComboRow()" style="border-color:rgba(255,140,0,.4);background:rgba(255,140,0,.08);color:#FF9D33;width:100%;padding:9px">+ Agregar producto al combo</button>
-          <label>Precio del combo</label>
-          <input type="number" id="prComboPrice" placeholder="Ej. 150" min="1">
-        </div>
-        <label>Días activos</label>
-        <div class="day-chips" id="prDays">
-          <div class="day-chip on" data-d="0">D</div><div class="day-chip on" data-d="1">L</div>
-          <div class="day-chip on" data-d="2">M</div><div class="day-chip on" data-d="3">M</div>
-          <div class="day-chip on" data-d="4">J</div><div class="day-chip on" data-d="5">V</div>
-          <div class="day-chip on" data-d="6">S</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div><label>Desde (opcional)</label><input type="time" id="prStart"></div>
-          <div><label>Hasta (opcional)</label><input type="time" id="prEnd"></div>
-        </div>
-        <button class="promo-submit" onclick="createPromo()">🔥 Crear promoción</button>
-      </div>
-      <div id="promoList"></div>
-
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red);margin:24px 0 4px">🚬 CIGARROS</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red);margin-bottom:4px">🚬 CIGARROS</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Carga manualmente cada tipo — se conecta solo al inventario y se descuenta automático conforme se venden</div>
       <div class="cig-form">
         <div class="cig-form-row">
@@ -1099,112 +1041,6 @@ async function removeMesa(){
 }
 
 
-
-// ===== PROMOCIONES =====
-let allProdsForPromos=[];
-const DAY_NAMES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-async function loadPromoSection(){
-  const {data}=await sb.from('products').select('id,name,price,category').eq('available',true).neq('category','cigarros').order('category').order('sort_order');
-  allProdsForPromos=data||[];
-  const opts=allProdsForPromos.map(p=>`<option value="${p.id}">${p.name} — $${Number(p.price).toFixed(0)}</option>`).join('');
-  document.getElementById('prProduct').innerHTML=opts;
-  if(!document.getElementById('comboRows').children.length){ addComboRow(); addComboRow(); }
-  else document.querySelectorAll('.combo-row select').forEach(s=>{const v=s.value;s.innerHTML=opts;s.value=v;});
-  loadPromoList();
-}
-function prTypeChanged(){
-  const t=document.getElementById('prType').value;
-  document.getElementById('prDescuentoFields').style.display=t==='descuento'?'block':'none';
-  document.getElementById('prComboFields').style.display=t==='combo'?'block':'none';
-}
-function addComboRow(){
-  const opts=allProdsForPromos.map(p=>`<option value="${p.id}">${p.name} — $${Number(p.price).toFixed(0)}</option>`).join('');
-  const div=document.createElement('div');
-  div.className='combo-row';
-  div.innerHTML=`<select>${opts}</select><input type="number" value="1" min="1" max="9"><button class="combo-del" onclick="this.parentElement.remove()">✕</button>`;
-  document.getElementById('comboRows').appendChild(div);
-}
-document.addEventListener('click',e=>{
-  if(e.target.classList?.contains('day-chip')) e.target.classList.toggle('on');
-});
-async function createPromo(){
-  const name=document.getElementById('prName').value.trim();
-  if(!name){ toast('Ponle nombre a la promo'); return; }
-  const type=document.getElementById('prType').value;
-  const days=[...document.querySelectorAll('#prDays .day-chip.on')].map(c=>parseInt(c.dataset.d));
-  if(!days.length){ toast('Elige al menos un día'); return; }
-  const payload={name,type,days,
-    start_time:document.getElementById('prStart').value||null,
-    end_time:document.getElementById('prEnd').value||null};
-  if((payload.start_time&&!payload.end_time)||(!payload.start_time&&payload.end_time)){
-    toast('Pon ambas horas o ninguna'); return;
-  }
-  if(type==='descuento'){
-    payload.product_id=document.getElementById('prProduct').value;
-    payload.discount_pct=parseFloat(document.getElementById('prPct').value);
-    if(!payload.discount_pct||payload.discount_pct<=0||payload.discount_pct>=100){ toast('Porcentaje entre 1 y 99'); return; }
-  }else{
-    const rows=[...document.querySelectorAll('.combo-row')];
-    payload.combo_items=rows.map(r=>({product_id:r.querySelector('select').value, qty:parseInt(r.querySelector('input').value)||1}));
-    if(payload.combo_items.length<2){ toast('El combo necesita al menos 2 productos'); return; }
-    payload.combo_price=parseFloat(document.getElementById('prComboPrice').value);
-    if(!payload.combo_price||payload.combo_price<=0){ toast('Pon el precio del combo'); return; }
-    const normal=payload.combo_items.reduce((s,ci)=>{const p=allProdsForPromos.find(x=>x.id===ci.product_id);return s+(p?Number(p.price)*ci.qty:0);},0);
-    if(payload.combo_price>=normal){ toast('⚠️ El combo cuesta $'+payload.combo_price+' pero por separado son $'+normal.toFixed(0)+' — no es descuento'); return; }
-  }
-  try{
-    const {error}=await sb.rpc('create_promo',{p:payload});
-    if(error) throw error;
-    toast('🔥 Promo creada');
-    document.getElementById('prName').value='';
-    document.getElementById('prPct').value='';
-    document.getElementById('prComboPrice').value='';
-    loadPromoList();
-  }catch(e){ console.error('createPromo:',e); toast('❌ '+(e.message||'Error')); }
-}
-async function loadPromoList(){
-  const {data}=await sb.from('promos').select('*').order('created_at',{ascending:false});
-  const el=document.getElementById('promoList');
-  if(!data||!data.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:4px 0 8px">Sin promociones creadas</div>'; return; }
-  const {data:liveData}=await sb.rpc('get_active_promos');
-  const liveIds=new Set((liveData||[]).map(p=>p.id));
-  el.innerHTML=data.map(p=>{
-    let detail='';
-    if(p.type==='descuento'){
-      const prod=allProdsForPromos.find(x=>x.id===p.product_id);
-      detail=`−${Number(p.discount_pct)}% en ${prod?prod.name:'producto'}`;
-    }else{
-      const parts=(p.combo_items||[]).map(ci=>{const pr=allProdsForPromos.find(x=>x.id===ci.product_id);return (ci.qty>1?ci.qty+'x ':'')+(pr?pr.name:'?');});
-      detail=parts.join(' + ')+' por $'+Number(p.combo_price).toFixed(0);
-    }
-    const daysTxt=(p.days||[]).length===7?'Todos los días':(p.days||[]).map(d=>DAY_NAMES[d]).join(', ');
-    const horaTxt=p.start_time?` · ${p.start_time.slice(0,5)}–${p.end_time.slice(0,5)}`:' · todo el día';
-    const isLive=liveIds.has(p.id);
-    return `<div class="promo-card ${isLive?'live':''}">
-      <div class="promo-info">
-        <div class="promo-name">${p.type==='combo'?'🎁':'🔥'} ${p.name} ${isLive?'<span class="promo-live">● ACTIVA AHORA</span>':''}</div>
-        <div class="promo-meta">${detail}<br>${daysTxt}${horaTxt}</div>
-      </div>
-      <label class="toggle"><input type="checkbox" ${p.active?'checked':''} onchange="togglePromoRow('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
-      <button class="promo-del" onclick="deletePromoRow('${p.id}')">🗑</button>
-    </div>`;
-  }).join('');
-}
-async function togglePromoRow(id,val){
-  const {error}=await sb.rpc('toggle_promo',{p_id:id,p_active:val});
-  if(error){ toast('❌ Error'); return; }
-  toast(val?'🔥 Promo encendida':'⏸ Promo pausada');
-  loadPromoList();
-}
-async function deletePromoRow(id){
-  const ok=await appConfirm('¿Eliminar esta promoción?');
-  if(!ok) return;
-  const {error}=await sb.rpc('delete_promo',{p_id:id});
-  if(error){ toast('❌ Error'); return; }
-  toast('🗑 Promo eliminada');
-  loadPromoList();
-}
-
 // ===== CIGARROS =====
 async function loadCigarros(){
   const el=document.getElementById('cigList');
@@ -1305,7 +1141,7 @@ function switchPage(btn){
   if(page==='analytics') loadAnalytics();
   if(page==='buy') loadBuying();
   if(page==='mesas'){ loadMesaAdmin(); loadMesas(); }
-  if(page==='prods'){ loadPromoSection(); loadCigarros(); loadProducts(); }
+  if(page==='prods'){ loadCigarros(); loadProducts(); }
   if(page==='finanzas'){ document.getElementById('expDate').valueAsDate=new Date(); loadMermaIngredients(); loadFinanzas(); }
 }
 
