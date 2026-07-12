@@ -548,7 +548,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
   <!-- Paso Clamato (solo micheladas) -->
   <div id="escStep4" class="esc-step" style="display:none">
     <div class="esc-grid" style="grid-template-columns:1fr 1fr">
-      <button class="esc-btn" data-val="con_clamato" onclick="escSelect(this,4)" style="padding:20px 8px">🍅<br>Con Clamato <span class="esc-extra">+$5</span></button>
+      <button class="esc-btn" data-val="con_clamato" onclick="escSelect(this,4)" style="padding:20px 8px">🍅<br>Con Clamato <span class="esc-extra">+$10</span></button>
       <button class="esc-btn" data-val="sin_clamato" onclick="escSelect(this,4)" style="padding:20px 8px">🚫<br>Sin Clamato</button>
     </div>
   </div>
@@ -1634,7 +1634,7 @@ function buildEscSteps(p){
   steps.push('esc');
   if(needsFullFlow(p)){
     steps.push('polvo');
-    if(p.category==='micheladas') steps.push('clamato');
+    if(p.category==='micheladas'&&!p.name.toLowerCase().includes('cubana')) steps.push('clamato');
     steps.push('limon');
   }
   return steps;
@@ -1703,7 +1703,7 @@ function closeEscModal(){
   escPendingProductId=null;
 }
 
-function lineExtra(l){ return (l.polvo==='truena_pop'?15:0)+(l.clamato==='con_clamato'?5:0); }
+function lineExtra(l){ return (l.polvo==='truena_pop'?15:0)+(l.clamato==='con_clamato'?10:0); }
 function confirmEsc(){
   if(!escPendingProductId||!escSel.esc) return;
   const pid=escPendingProductId;

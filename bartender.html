@@ -378,8 +378,10 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <div class="bc-grid" id="bcEsc"></div>
     <div class="bc-lbl">Polvo</div>
     <div class="bc-grid" id="bcPolvo"></div>
-    <div class="bc-lbl">Clamato</div>
-    <div class="bc-grid" id="bcClamato"></div>
+    <div id="bcClamatoSec">
+      <div class="bc-lbl">Clamato</div>
+      <div class="bc-grid" id="bcClamato"></div>
+    </div>
     <div class="bc-lbl">Sal / Limón</div>
     <div class="bc-grid" id="bcLimon"></div>
     <div class="bc-qty">
@@ -668,7 +670,7 @@ const BC_OPTS={
   beer:[['corona','Corona'],['victoria','Victoria']],
   esc:[['chamoy','Chamoy'],['tamarindo','Tamarindo'],['sandia','Sandía'],['frutos_rojos','Frutos Rojos'],['mango','Mango'],['mora_azul','Mora Azul'],['fresa_chamoy','Fresa Chamoy']],
   polvo:[['sin_polvo','Sin polvo'],['mora','Mora'],['tajin','Tajín'],['miguelito','Miguelito'],['ajonjoli','Ajonjolí'],['azucar','Azúcar'],['truena_pop','Truena Pop +$15']],
-  clamato:[['sin_clamato','Sin Clamato'],['con_clamato','Con Clamato +$5']],
+  clamato:[['sin_clamato','Sin Clamato'],['con_clamato','Con Clamato +$10']],
   limon:[['sal_limon','Sal y limón'],['solo_sal','Solo sal'],['solo_limon','Solo limón'],['sin_sal_limon','Sin sal ni limón']]
 };
 let bcState=null;
@@ -677,9 +679,11 @@ function bcNeedsBeer(p){
   return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
 }
 function openBarCfg(product, onConfirm){
+  const hasClamato = product.category==='micheladas' && !product.name.toLowerCase().includes('cubana');
   bcState={product, onConfirm, qty:1,
     beer:null, esc:null, polvo:'sin_polvo', clamato:'sin_clamato', limon:'sal_limon',
-    needsBeer:bcNeedsBeer(product)};
+    needsBeer:bcNeedsBeer(product), hasClamato};
+  document.getElementById('bcClamatoSec').style.display=hasClamato?'block':'none';
   document.getElementById('bcTitle').textContent=product.name;
   document.getElementById('bcQtyNum').textContent='1';
   document.getElementById('bcBeerSec').style.display=bcState.needsBeer?'block':'none';
@@ -704,7 +708,7 @@ function bcQty(d){
   bcUpdatePrice();
 }
 function bcExtra(){
-  return (bcState.polvo==='truena_pop'?15:0)+(bcState.clamato==='con_clamato'?5:0);
+  return (bcState.polvo==='truena_pop'?15:0)+(bcState.clamato==='con_clamato'?10:0);
 }
 function bcUpdatePrice(){
   const unit=Number(bcState.product.price)+bcExtra();
@@ -722,7 +726,7 @@ function closeBarCfg(){
 function confirmBarCfg(){
   if(!bcState) return;
   const cfg={escarchado:bcState.esc, polvo:bcState.polvo, limon:bcState.limon, quantity:bcState.qty};
-  if(bcState.product.category==='micheladas') cfg.clamato=bcState.clamato;
+  if(bcState.hasClamato) cfg.clamato=bcState.clamato;
   if(bcState.needsBeer) cfg.beer_choice=bcState.beer;
   const cb=bcState.onConfirm, p=bcState.product;
   closeBarCfg();
@@ -904,7 +908,7 @@ function moCfgTags(cfg){
 }
 function moLineExtra(c){
   if(!c.cfg) return 0;
-  return (c.cfg.polvo==='truena_pop'?15:0)+(c.cfg.clamato==='con_clamato'?5:0);
+  return (c.cfg.polvo==='truena_pop'?15:0)+(c.cfg.clamato==='con_clamato'?10:0);
 }
 function renderMoCart(){
   const items=Object.values(moCart);
