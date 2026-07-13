@@ -453,9 +453,12 @@ async function initApp(){
 // ===== ORDERS =====
 async function loadOrders(){
   try{
-    const today=new Date().toISOString().split('T')[0];
+    // Pendientes de cobro: SIEMPRE visibles sin importar fecha.
+    // Pagadas: últimas 24h (para el corte de la jornada).
+    const cutoff=new Date(Date.now()-24*60*60*1000).toISOString();
     const {data:ords,error:oErr}=await sb.from('orders').select('*')
-      .gte('created_at',today+'T00:00:00').neq('status','cancelado')
+      .neq('status','cancelado')
+      .or(`payment_status.eq.pendiente,created_at.gte.${cutoff}`)
       .order('created_at',{ascending:false});
     if(oErr){ console.error('Error cargando órdenes:',oErr); return; }
     if(!ords||!ords.length){ orders=[]; updateCounts(); renderOrdersList(); return; }
@@ -686,7 +689,7 @@ const BC_OPTS={
 let bcState=null;
 function bcNeedsBeer(p){
   const n=p.name.toLowerCase();
-  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
+  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero')&&!n.includes('high life')&&!n.includes('pacífico');
 }
 function openBarCfg(product, onConfirm){
   const isBoneless = product.name.toLowerCase().includes('boneless');
