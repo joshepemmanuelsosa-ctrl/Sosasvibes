@@ -1089,6 +1089,12 @@ function openOrder(){
     submitExtraItems();
     return;
   }
+  // Cuenta abierta viva → el pedido se agrega a la misma cuenta (evita órdenes duplicadas por mesa)
+  if(currentOrderId && !billRequested && !orderLockedPaid){
+    closeCart();
+    submitExtraItems();
+    return;
+  }
   // Si ya eligió mesa al inicio, pre-seleccionarla
   if(selectedTable){
     selTable=selectedTable;
@@ -1634,7 +1640,7 @@ function needsFullFlow(p){
 }
 function needsBeerChoice(p){
   const n=(p.name||'').toLowerCase();
-  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero');
+  return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero')&&!n.includes('high life')&&!n.includes('pacífico');
 }
 function isBonelessP(p){ return p.name.toLowerCase().includes('boneless'); }
 function buildEscSteps(p){
