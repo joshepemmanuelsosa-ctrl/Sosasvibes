@@ -246,6 +246,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .extras-badge{background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:var(--pill);animation:xpulse 1s ease-in-out infinite;display:inline-block;margin-left:6px;vertical-align:middle}
 @keyframes xpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.93)}}
 .ocard.has-extras{box-shadow:0 0 14px rgba(255,30,30,.3)!important}
+.ab-ver{font-size:8.5px;color:var(--muted);letter-spacing:.5px;margin-left:7px;vertical-align:middle;font-family:'Inter',sans-serif;font-weight:600}
 .toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#0E0E0E;border:1px solid rgba(182,255,26,.4);color:var(--lime);font:600 13px 'Inter',sans-serif;padding:10px 20px;border-radius:var(--pill);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 </style>
@@ -270,7 +271,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 <!-- APP -->
 <div id="appPage">
   <div class="app-bar">
-    <div class="ab-title">SOSA'S VIBES</div>
+    <div class="ab-title">SOSA'S VIBES<span class="ab-ver">v17JUL-B</span></div>
     <div class="ab-right">
       <button class="ab-bell" id="bellBtn"><span>🔔</span><span class="bell-badge" id="bellBadge">0</span></button>
       <span class="ab-user" id="abUser"></span>
@@ -453,14 +454,19 @@ async function initApp(){
 // ===== ORDERS =====
 async function loadOrders(){
   try{
-    // Pendientes de cobro: SIEMPRE visibles sin importar fecha.
-    // Pagadas: últimas 24h (para el corte de la jornada).
+    // CONSULTA 1: pendientes de cobro — SIEMPRE visibles, sin filtro de fecha.
+    // CONSULTA 2: pagadas de las últimas 24h (para el corte).
+    // Separadas a propósito: un solo .or() con fecha puede fallar y vaciar el panel.
     const cutoff=new Date(Date.now()-24*60*60*1000).toISOString();
-    const {data:ords,error:oErr}=await sb.from('orders').select('*')
-      .neq('status','cancelado')
-      .or(`payment_status.eq.pendiente,created_at.gte.${cutoff}`)
-      .order('created_at',{ascending:false});
-    if(oErr){ console.error('Error cargando órdenes:',oErr); return; }
+    const [pend, pagadas] = await Promise.all([
+      sb.from('orders').select('*').neq('status','cancelado').eq('payment_status','pendiente'),
+      sb.from('orders').select('*').neq('status','cancelado').eq('payment_status','pagado').gte('created_at',cutoff)
+    ]);
+    if(pend.error){ console.error('Error cargando pendientes:',pend.error); showToast('⚠️ Error de conexión — no se borró nada, reintentando'); return; }
+    const seen=new Set();
+    const ords=[...(pend.data||[]), ...(pagadas.data||[])]
+      .filter(o=>{ if(seen.has(o.id)) return false; seen.add(o.id); return true; })
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     if(!ords||!ords.length){ orders=[]; updateCounts(); renderOrdersList(); return; }
     const ids=ords.map(o=>o.id);
     const {data:items}=await sb.from('order_items').select('*').in('order_id',ids);
@@ -1046,9 +1052,11 @@ async function loadAnalytics(){
 
 // ===== CORTE =====
 async function loadCorte(){
-  const today=new Date().toISOString().split('T')[0];
-  document.getElementById('corteDate').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const {data:ords}=await sb.from('orders').select('*, order_items(*)').gte('created_at',today+'T00:00:00');
+  // Medianoche en hora LOCAL del dispositivo (México), no en UTC
+  const n=new Date();
+  const dayStart=new Date(n.getFullYear(),n.getMonth(),n.getDate()).toISOString();
+  document.getElementById('corteDate').textContent=n.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const {data:ords}=await sb.from('orders').select('*, order_items(*)').gte('created_at',dayStart);
   if(!ords){document.getElementById('corteTotal').textContent='$0';return}
   const paid=ords.filter(o=>o.payment_status==='pagado');
   const pending=ords.filter(o=>o.payment_status==='pendiente'&&o.status!=='cancelado');
