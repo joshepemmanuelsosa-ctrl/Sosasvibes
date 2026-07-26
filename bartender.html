@@ -420,6 +420,15 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function lockBtn(el){ if(!el) return; el.dataset.busy='1'; el.disabled=true; el.style.opacity='.5'; el.style.pointerEvents='none'; }
 function unlockBtn(el){ if(!el) return; el.dataset.busy='0'; el.disabled=false; el.style.opacity=''; el.style.pointerEvents=''; }
 
+// ===== UTIL: "día de negocio" — el corte no debe resetearse a medianoche si el bar
+// sigue abierto (a veces cierra a las 2-4am). El día empieza a esta hora, no a las 00:00.
+const CORTE_CUTOFF_HOUR = 6;
+function businessDayStart(d=new Date(), cutoffHour=CORTE_CUTOFF_HOUR){
+  const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),cutoffHour,0,0,0);
+  if(d<start) start.setDate(start.getDate()-1);
+  return start;
+}
+
 // ===== AUTH =====
 async function doLogin(){
   const email=document.getElementById('lpEmail').value.trim();
@@ -1032,7 +1041,7 @@ function setRange(btn){
 }
 function rangeStart(){
   const now=new Date();
-  if(curRange==='today') return new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+  if(curRange==='today') return businessDayStart(now).toISOString();
   if(curRange==='week'){ now.setDate(now.getDate()-7); return now.toISOString(); }
   if(curRange==='month'){ now.setDate(now.getDate()-30); return now.toISOString(); }
 }
@@ -1086,10 +1095,12 @@ async function loadAnalytics(){
 
 // ===== CORTE =====
 async function loadCorte(){
-  // Medianoche en hora LOCAL del dispositivo (México), no en UTC
+  // Día de negocio: empieza a las CORTE_CUTOFF_HOUR (no a medianoche), para que una
+  // noche que cierra a las 2-4am no se parta en dos cortes distintos.
   const n=new Date();
-  const dayStart=new Date(n.getFullYear(),n.getMonth(),n.getDate()).toISOString();
-  document.getElementById('corteDate').textContent=n.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const bizDay=businessDayStart(n);
+  const dayStart=bizDay.toISOString();
+  document.getElementById('corteDate').textContent=bizDay.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const {data:ords}=await sb.from('orders').select('*, order_items(*)').gte('created_at',dayStart);
   if(!ords){document.getElementById('corteTotal').textContent='$0';return}
   const paid=ords.filter(o=>o.payment_status==='pagado');
@@ -1127,7 +1138,7 @@ async function loadCorte(){
 function copyCorte(){
   if(!window._corteData) return;
   const {revenue,paid,pending,prods}=window._corteData;
-  const d=new Date().toLocaleDateString('es-MX');
+  const d=businessDayStart().toLocaleDateString('es-MX');
   let txt=`CORTE SOSA'S VIBES — ${d}\n`;
   txt+=`Total: $${revenue.toFixed(0)}\nÓrdenes pagadas: ${paid} | Pendientes: ${pending}\n\nProductos:\n`;
   prods.forEach(([name,v])=>txt+=`  ${name}: ${v.qty} uds / $${v.revenue.toFixed(0)}\n`);

@@ -544,6 +544,15 @@ const sb=createClient('https://izpuzcjsarncdvpkjbzp.supabase.co','eyJhbGciOiJIUz
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 // Fecha YYYY-MM-DD en hora LOCAL (evita el corrimiento de día que da toISOString().slice(0,10) en UTC)
 function localDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+// "Día de negocio": empieza a esta hora, no a medianoche, para que una noche que cierra
+// a las 2-4am no se cuente como si fuera ya el "Hoy" siguiente (debe coincidir con el
+// mismo CORTE_CUTOFF_HOUR usado en bartender.html para que ambos paneles cuadren).
+const CORTE_CUTOFF_HOUR = 6;
+function businessDayStart(d=new Date(), cutoffHour=CORTE_CUTOFF_HOUR){
+  const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),cutoffHour,0,0,0);
+  if(d<start) start.setDate(start.getDate()-1);
+  return start;
+}
 
 // ===== AUTH =====
 async function doLogin(){
@@ -595,7 +604,7 @@ function subscribeRealtime(){
 // ===== DASHBOARD =====
 function rangeStart(r){
   const now=new Date();
-  if(r==='today') return new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+  if(r==='today') return businessDayStart(now).toISOString();
   if(r==='week'){const d=new Date(now);d.setDate(d.getDate()-7);return d.toISOString();}
   if(r==='month'){const d=new Date(now);d.setDate(d.getDate()-30);return d.toISOString();}
 }
@@ -848,7 +857,7 @@ let finRange='today', finTab='margenes', mermaIngredients=[];
 
 function rangeStartFin(r){
   const now=new Date();
-  if(r==='today') return new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+  if(r==='today') return businessDayStart(now).toISOString();
   if(r==='week'){const d=new Date(now);d.setDate(d.getDate()-7);return d.toISOString();}
   if(r==='month'){const d=new Date(now);d.setDate(d.getDate()-30);return d.toISOString();}
 }
