@@ -414,6 +414,12 @@ const sb = createClient('https://izpuzcjsarncdvpkjbzp.supabase.co','eyJhbGciOiJI
 let orders=[], products=[], tables=[], moCart={}, moSelTable=null;
 let curStatus='nuevo', curRange='today', orderSub=null;
 
+// ===== UTIL: escape untrusted strings before innerHTML interpolation =====
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// ===== UTIL: lock/unlock a button (or clickable element) while a request is in flight =====
+function lockBtn(el){ if(!el) return; el.dataset.busy='1'; el.disabled=true; el.style.opacity='.5'; el.style.pointerEvents='none'; }
+function unlockBtn(el){ if(!el) return; el.dataset.busy='0'; el.disabled=false; el.style.opacity=''; el.style.pointerEvents=''; }
+
 // ===== AUTH =====
 async function doLogin(){
   const email=document.getElementById('lpEmail').value.trim();
@@ -477,7 +483,8 @@ async function loadOrders(){
 async function checkLowStock(){
   try{
     const {data,error}=await sb.rpc('low_stock_alert');
-    if(error||!data) return;
+    if(error){ console.error('checkLowStock error:',error); showToast('⚠️ No se pudo revisar el stock bajo'); return; }
+    if(!data) return;
     const banner=document.getElementById('lowStockBanner');
     if(!data.length){ banner.classList.remove('show'); return; }
     const zeros=data.filter(x=>Number(x.stock)===0);
@@ -487,14 +494,16 @@ async function checkLowStock(){
       `<div>${Number(x.stock)===0?'<span class="lsb-zero">AGOTADO</span>':Number(x.stock)} — ${x.name} <span style="color:var(--muted)">(mín ${Number(x.min)})</span></div>`
     ).join('');
     banner.classList.add('show');
-  }catch(e){ console.error('checkLowStock:',e); }
+  }catch(e){ console.error('checkLowStock:',e); showToast('⚠️ No se pudo revisar el stock bajo'); }
 }
 async function loadProducts(){
-  const {data}=await sb.from('products').select('*').eq('available',true).order('category').order('sort_order');
+  const {data,error}=await sb.from('products').select('*').eq('available',true).order('category').order('sort_order');
+  if(error){ console.error('loadProducts error:',error); showToast('⚠️ No se pudieron cargar los productos'); return; }
   if(data) products=data;
 }
 async function loadTables(){
-  const {data}=await sb.from('restaurant_tables').select('*').eq('active',true).order('number');
+  const {data,error}=await sb.from('restaurant_tables').select('*').eq('active',true).order('number');
+  if(error){ console.error('loadTables error:',error); showToast('⚠️ No se pudieron cargar las mesas'); return; }
   if(data) tables=data;
 }
 function subscribeOrders(){
@@ -531,7 +540,7 @@ function subscribeOrders(){
               showBellBadge();
             }
             if(old.status!=='cancelado' && payload.new.status==='cancelado'){
-              showToast('🚫 #'+orders[idx].order_number+' · '+orders[idx].table_label+' fue cancelada por el cliente');
+              showToast('🚫 Orden #'+orders[idx].order_number+' · '+orders[idx].table_label+' fue cancelada');
             }
             if(!old.bill_requested && payload.new.bill_requested){
               playExtraAlert();
@@ -611,16 +620,16 @@ function orderCardHTML(o){
     if(i.clamato_choice) tags.push(`<span class="oci-tag clamato">${CLAMATO_B[i.clamato_choice]||'🍅 '+i.clamato_choice}</span>`);
     if(i.limon_choice) tags.push(`<span class="oci-tag limon">${LIMON_B[i.limon_choice]||'🍋 '+i.limon_choice}</span>`);
     const tagsHTML=tags.length?`<div class="oci-details">${tags.join('')}</div>`:'';
-    const delBtn=!paid?`<button class="oi-del" onclick="event.stopPropagation();removeOrderItem('${i.id}','${o.id}')">✕</button>`:'';
-    return `<div class="oci"><div class="oci-top"><strong>${i.quantity}x ${i.product_name}${extraBadge}</strong><span style="display:flex;align-items:center">$${sub.toFixed(0)}${delBtn}</span></div>${tagsHTML}</div>`;
+    const delBtn=!paid?`<button class="oi-del" onclick="event.stopPropagation();removeOrderItem('${i.id}','${o.id}',this)">✕</button>`:'';
+    return `<div class="oci"><div class="oci-top"><strong>${i.quantity}x ${esc(i.product_name)}${extraBadge}</strong><span style="display:flex;align-items:center">$${sub.toFixed(0)}${delBtn}</span></div>${tagsHTML}</div>`;
   }).join('');
-  const notesHTML=o.notes?`<div class="oc-notes">📝 ${o.notes}</div>`:'';
+  const notesHTML=o.notes?`<div class="oc-notes">📝 ${esc(o.notes)}</div>`:'';
   let actionsHTML='';
   if(!paid){
-    if(o.status==='nuevo') actionsHTML+=`<button class="oa-btn oa-prep" onclick="event.stopPropagation();updateStatus('${o.id}','preparando')">→ Preparando</button>`;
-    if(o.status==='preparando') actionsHTML+=`<button class="oa-btn oa-listo" onclick="event.stopPropagation();updateStatus('${o.id}','listo')">✓ Listo</button>`;
-    if(o.status==='listo') actionsHTML+=`<button class="oa-btn oa-entregado" onclick="event.stopPropagation();updateStatus('${o.id}','entregado')">🍺 Entregado</button>`;
-    if(o.status!=='entregado') actionsHTML+=`<button class="oa-btn oa-cancel" onclick="event.stopPropagation();cancelOrder('${o.id}')">✕</button>`;
+    if(o.status==='nuevo') actionsHTML+=`<button class="oa-btn oa-prep" onclick="event.stopPropagation();updateStatus('${o.id}','preparando',this)">→ Preparando</button>`;
+    if(o.status==='preparando') actionsHTML+=`<button class="oa-btn oa-listo" onclick="event.stopPropagation();updateStatus('${o.id}','listo',this)">✓ Listo</button>`;
+    if(o.status==='listo') actionsHTML+=`<button class="oa-btn oa-entregado" onclick="event.stopPropagation();updateStatus('${o.id}','entregado',this)">🍺 Entregado</button>`;
+    if(o.status!=='entregado') actionsHTML+=`<button class="oa-btn oa-cancel" onclick="event.stopPropagation();cancelOrder('${o.id}',this)">✕</button>`;
     actionsHTML+=`<button class="oa-btn oa-pay" onclick="event.stopPropagation();showPayMethods('${o.id}')">💰 Cobrar</button>`;
   }
   const tipAmt=Number(o.tip_amount||0);
@@ -639,11 +648,11 @@ function orderCardHTML(o){
     <div class="oc-head" onclick="toggleCard('${o.id}')">
       <div class="oc-left">
         <div class="oc-num">Orden #${o.order_number}${extrasBadge}${billBadge}</div>
-        <div class="oc-table">📍 ${o.table_label}${hasExtras?' <span style=\"font-size:10px;color:#FFC233\">⚡ extras</span>':''}</div>
+        <div class="oc-table">📍 ${esc(o.table_label)}${hasExtras?' <span style=\"font-size:10px;color:#FFC233\">⚡ extras</span>':''}</div>
         ${(!paid&&o.payment_method)?`<div class="pay-intent ${o.payment_method}">${PAY_ICO[o.payment_method]} Pagará: ${PAY_LBL[o.payment_method]}</div>`:''}
         ${tipTagHTML}
-        ${o.custom_name?`<div class="oc-name-tag">🏷️ ${o.custom_name}</div>`:''}
-        ${Number(o.discount_amount||0)>0?`<div class="promo-note-tag">🔥 ${o.promo_note||'Promo'} </div>`:''}
+        ${o.custom_name?`<div class="oc-name-tag">🏷️ ${esc(o.custom_name)}</div>`:''}
+        ${Number(o.discount_amount||0)>0?`<div class="promo-note-tag">🔥 ${esc(o.promo_note||'Promo')} </div>`:''}
       </div>
       <div class="oc-right">
         <div class="oc-total">$${grandTotal.toFixed(0)}</div>
@@ -656,7 +665,7 @@ function orderCardHTML(o){
       ${notesHTML}
       ${!paid?`<div class="oc-editbar">
         <button class="oe-btn" onclick="event.stopPropagation();toggleEditPanel('${o.id}')">➕ Agregar productos</button>
-        <button class="oe-btn name" onclick="event.stopPropagation();promptOrderName('${o.id}')">🏷️ ${o.custom_name?'Cambiar':'Poner'} nombre</button>
+        <button class="oe-btn name" onclick="event.stopPropagation();promptOrderName('${o.id}',this)">🏷️ ${o.custom_name?'Cambiar':'Poner'} nombre</button>
       </div>
       <div class="oe-panel" id="oe-${o.id}">
         <input class="oe-search" placeholder="🔍 Buscar producto..." oninput="renderEditProds('${o.id}',this.value)" onclick="event.stopPropagation()">
@@ -675,7 +684,8 @@ function toggleCard(id){
   if(el?.classList.contains('expanded')){
     const ord=orders.find(o=>o.id===id);
     if(ord?.extras_pending){
-      sb.from('orders').update({extras_pending:false}).eq('id',id);
+      sb.from('orders').update({extras_pending:false}).eq('id',id)
+        .then(({error})=>{ if(error) console.error('toggleCard extras_pending update error:',error); });
       ord.extras_pending=false;
       // Quitar badge visualmente sin re-renderizar todo
       el.querySelector('.extras-badge')?.remove();
@@ -764,8 +774,10 @@ function confirmBarCfg(){
 }
 
 // ===== EDICIÓN DE ORDEN =====
-async function removeOrderItem(itemId, orderId){
+async function removeOrderItem(itemId, orderId, btn){
+  if(btn && btn.dataset.busy==='1') return;
   if(!confirm('¿Eliminar este producto de la orden? Su inventario se devolverá automáticamente.')) return;
+  lockBtn(btn);
   try{
     const {data,error}=await sb.rpc('remove_order_item',{p_order_item_id:itemId});
     if(error) throw error;
@@ -774,6 +786,7 @@ async function removeOrderItem(itemId, orderId){
     // Reabrir la tarjeta que estábamos editando
     document.getElementById('oc-'+orderId)?.classList.add('expanded');
   }catch(e){ console.error('removeOrderItem error:',e); showToast('❌ '+(e.message||'No se pudo eliminar')); }
+  finally{ unlockBtn(btn); }
 }
 
 function toggleEditPanel(orderId){
@@ -805,22 +818,24 @@ function renderEditProds(orderId, query){
   el.innerHTML=html;
 }
 function prodRow(p,orderId,isSola){
-  return `<div class="oe-prod ${isSola?'oe-cerveza-sola':''}" onclick="event.stopPropagation();addItemToOrder('${orderId}','${p.id}')">
+  return `<div class="oe-prod ${isSola?'oe-cerveza-sola':''}" onclick="event.stopPropagation();addItemToOrder('${orderId}','${p.id}',this)">
     <span>${p.emoji||'🍺'}</span>
     <span class="oe-prod-name">${p.name}</span>
     <span class="oe-prod-price">$${Number(p.price).toFixed(0)}</span>
     <span class="oe-prod-add">+</span>
   </div>`;
 }
-async function addItemToOrder(orderId, productId){
+async function addItemToOrder(orderId, productId, btn){
   const prod=products.find(x=>x.id===productId);
   if(prod && (prod.has_escarchado || prod.name.toLowerCase().includes('boneless'))){
     openBarCfg(prod, (p,cfg)=>sendItemToOrder(orderId, {product_id:p.id, ...cfg}));
     return;
   }
-  sendItemToOrder(orderId, {product_id:productId, quantity:1});
+  sendItemToOrder(orderId, {product_id:productId, quantity:1}, btn);
 }
-async function sendItemToOrder(orderId, item){
+async function sendItemToOrder(orderId, item, btn){
+  if(btn && btn.dataset.busy==='1') return;
+  lockBtn(btn);
   try{
     const {data,error}=await sb.rpc('bartender_add_items',{p_order_id:orderId,p_items:[item]});
     if(error) throw error;
@@ -832,12 +847,15 @@ async function sendItemToOrder(orderId, item){
     const panel=document.getElementById('oe-'+orderId);
     if(panel){ panel.classList.add('on'); renderEditProds(orderId,''); }
   }catch(e){ console.error('addItemToOrder error:',e); showToast('❌ '+(e.message||'No se pudo agregar')); }
+  finally{ unlockBtn(btn); }
 }
-async function promptOrderName(orderId){
+async function promptOrderName(orderId, btn){
   const ord=orders.find(o=>o.id===orderId);
   const current=ord?.custom_name||'';
   const name=prompt('Nombre para esta orden (ej. "Orden de Joshep"):', current);
   if(name===null) return; // canceló
+  if(btn && btn.dataset.busy==='1') return;
+  lockBtn(btn);
   try{
     const {error}=await sb.rpc('set_order_name',{p_order_id:orderId,p_name:name});
     if(error) throw error;
@@ -845,9 +863,12 @@ async function promptOrderName(orderId){
     await loadOrders(); renderOrdersList(); updateCounts();
     document.getElementById('oc-'+orderId)?.classList.add('expanded');
   }catch(e){ console.error('promptOrderName error:',e); showToast('❌ '+(e.message||'No se pudo guardar')); }
+  finally{ unlockBtn(btn); }
 }
 
-async function updateStatus(id,status){
+async function updateStatus(id,status,btn){
+  if(btn && btn.dataset.busy==='1') return;
+  lockBtn(btn);
   try{
     const updates={status};
     if(status==='listo') updates.extras_pending=false;
@@ -855,15 +876,19 @@ async function updateStatus(id,status){
     if(error) throw error;
     showToast('Estado actualizado: '+status);
   }catch(e){ console.error('updateStatus error:',e); showToast('❌ Error al actualizar'); }
+  finally{ unlockBtn(btn); }
 }
-async function cancelOrder(id){
+async function cancelOrder(id,btn){
+  if(btn && btn.dataset.busy==='1') return;
   if(!confirm('¿Cancelar esta orden? El inventario de todos sus productos se devolverá automáticamente.')) return;
+  lockBtn(btn);
   try{
     const {error}=await sb.rpc('cancel_order_admin',{p_order_id:id});
     if(error) throw error;
     showToast('✅ Orden cancelada · inventario devuelto');
     orders=orders.filter(o=>o.id!==id); renderOrdersList(); updateCounts();
   }catch(e){ console.error('cancelOrder error:',e); showToast('❌ '+(e.message||'No se pudo cancelar')); }
+  finally{ unlockBtn(btn); }
 }
 function showPayMethods(id){
   document.querySelectorAll('[id^="pm-"]').forEach(el=>el.style.display='none');
@@ -871,12 +896,21 @@ function showPayMethods(id){
   if(el) el.style.display='flex';
 }
 async function payOrder(id,method){
+  const box=document.getElementById('pm-'+id);
+  if(box){
+    if(box.dataset.busy==='1') return; // ya se está procesando un cobro para esta orden
+    box.dataset.busy='1';
+    box.querySelectorAll('.pm-btn').forEach(b=>lockBtn(b));
+  }
   try{
     const {data,error}=await sb.rpc('pay_order',{p_order_id:id,p_method:method});
     if(error) throw error;
     showToast('✅ Cobrado $'+Number(data.grand_total).toFixed(0)+' con '+method+(Number(data.tip)>0?' (incluye $'+Number(data.tip).toFixed(0)+' propina)':''));
     await loadOrders(); renderOrdersList(); updateCounts();
-  }catch(e){ console.error('payOrder error:',e); showToast('❌ '+(e.message||'Error al cobrar')); }
+  }catch(e){
+    console.error('payOrder error:',e); showToast('❌ '+(e.message||'Error al cobrar'));
+    if(box){ box.dataset.busy='0'; box.querySelectorAll('.pm-btn').forEach(b=>unlockBtn(b)); }
+  }
 }
 
 // ===== MANUAL ORDER =====

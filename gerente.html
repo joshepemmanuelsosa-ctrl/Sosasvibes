@@ -341,12 +341,12 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
           <div class="tbl-admin-title">🪑 Administrar Mesas</div>
         </div>
         <div class="tbl-stepper">
-          <button class="tbl-step-btn tbl-minus" onclick="removeMesa()">−</button>
+          <button class="tbl-step-btn tbl-minus" onclick="removeMesa(this)">−</button>
           <div>
             <div class="tbl-count" id="mesaCount">—</div>
             <div class="tbl-count-lbl">Mesas activas</div>
           </div>
-          <button class="tbl-step-btn tbl-plus" onclick="addMesa()">+</button>
+          <button class="tbl-step-btn tbl-plus" onclick="addMesa(this)">+</button>
         </div>
         <div class="tbl-chips" id="mesaChips"></div>
       </div>
@@ -389,7 +389,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
           <div><label>Desde (opcional)</label><input type="time" id="prStart"></div>
           <div><label>Hasta (opcional)</label><input type="time" id="prEnd"></div>
         </div>
-        <button class="promo-submit" onclick="createPromo()">🔥 Crear promoción</button>
+        <button class="promo-submit" onclick="createPromo(this)">🔥 Crear promoción</button>
       </div>
       <div id="promoList"></div>
 
@@ -406,7 +406,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
         <div class="cig-form-row">
           <div class="cig-form-full"><label>Costo por cigarro (opcional)</label><input type="number" id="cigCost" placeholder="$ — para calcular margen" min="0" step="0.5"></div>
         </div>
-        <button class="cig-submit" onclick="addCigarroType()">+ Cargar tipo de cigarro</button>
+        <button class="cig-submit" onclick="addCigarroType(this)">+ Cargar tipo de cigarro</button>
       </div>
       <div id="cigList"><div class="loading-center"><div class="spin"></div></div></div>
 
@@ -468,7 +468,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
           <div class="fin-form-row">
             <div class="fin-form-full"><label>Descripción (opcional)</label><input type="text" id="expDesc" placeholder="Ej. Pago de luz CFE junio"></div>
           </div>
-          <button class="fin-submit" onclick="addExpense()">+ Registrar gasto</button>
+          <button class="fin-submit" onclick="addExpense(this)">+ Registrar gasto</button>
         </div>
         <div id="expenseList"></div>
       </div>
@@ -490,7 +490,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
           <div class="fin-form-row">
             <div class="fin-form-full"><label>Notas (opcional)</label><input type="text" id="mermaNotes" placeholder="Detalle adicional"></div>
           </div>
-          <button class="fin-submit" onclick="addMerma()">+ Reportar merma</button>
+          <button class="fin-submit" onclick="addMerma(this)">+ Reportar merma</button>
         </div>
         <div id="mermaList2"></div>
       </div>
@@ -539,6 +539,11 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 <script>
 const {createClient}=supabase;
 const sb=createClient('https://izpuzcjsarncdvpkjbzp.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6cHV6Y2pzYXJuY2R2cGtqYnpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NDQ1MTEsImV4cCI6MjA5NjAyMDUxMX0.O4SEqPf-hMtAhmz-nXUrCQL_wwtS4qC2a_ZKFr6hbQQ');
+
+// Escapa texto proveniente de la BD antes de inyectarlo en innerHTML (previene XSS almacenado)
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// Fecha YYYY-MM-DD en hora LOCAL (evita el corrimiento de día que da toISOString().slice(0,10) en UTC)
+function localDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 
 // ===== AUTH =====
 async function doLogin(){
@@ -645,7 +650,7 @@ async function loadDashboard(){
   const maxP=top[0]?.[1]||1;
   document.getElementById('topProds').innerHTML=top.map(([n,v])=>`
     <div class="bar-row">
-      <div class="bar-info"><div class="bar-name">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxP*100).toFixed(0)}%"></div></div></div>
+      <div class="bar-info"><div class="bar-name">${esc(n)}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxP*100).toFixed(0)}%"></div></div></div>
       <div class="bar-val">${v}</div>
     </div>`).join('');
 }
@@ -681,20 +686,23 @@ async function loadInventory(){
         <div class="inv-field"><label>Costo/u ($)</label><input type="number" id="c_${i.id}" value="${Number(i.cost_per_unit)}" min="0" step="1"></div>
       </div>
       <label class="inv-countable"><input type="checkbox" ${i.countable!==false?'checked':''} onchange="toggleCountable('${i.id}',this.checked)"> Incluir en conteo de cierre</label>
-      <button class="inv-save" onclick="saveIngredient('${i.id}')">💾 Guardar</button>
+      <button class="inv-save" onclick="saveIngredient('${i.id}',this)">💾 Guardar</button>
     </div>`;
   }).join('');
 }
 
-async function saveIngredient(id){
+async function saveIngredient(id,btn){
   const stock=parseFloat(document.getElementById('s_'+id).value)||0;
   const min=parseFloat(document.getElementById('m_'+id).value)||0;
   const cost=parseFloat(document.getElementById('c_'+id).value)||0;
-  const {error}=await sb.from('ingredients')
-    .update({stock_current:stock,stock_min:min,cost_per_unit:cost,updated_at:new Date().toISOString()})
-    .eq('id',id);
-  if(error) toast('❌ Error al guardar');
-  else { toast('✅ Inventario actualizado'); loadInventory(); }
+  if(btn) btn.disabled=true;
+  try{
+    const {error}=await sb.from('ingredients')
+      .update({stock_current:stock,stock_min:min,cost_per_unit:cost,updated_at:new Date().toISOString()})
+      .eq('id',id);
+    if(error) toast('❌ Error al guardar');
+    else { toast('✅ Inventario actualizado'); loadInventory(); }
+  } finally { if(btn) btn.disabled=false; }
 }
 
 // ===== ANALYTICS =====
@@ -720,7 +728,7 @@ async function loadAnalytics(){
   });
   const sorted=Object.entries(prodMap).sort((a,b)=>b[1]-a[1]);
   const maxV=sorted[0]?.[1]||1;
-  const barRow=(n,v,cls='')=>`<div class="bar-row"><div class="bar-info"><div class="bar-name">${n}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${(v/maxV*100).toFixed(0)}%"></div></div></div><div class="bar-val" style="${cls==='red'?'color:var(--red)':''}">${v}</div></div>`;
+  const barRow=(n,v,cls='')=>`<div class="bar-row"><div class="bar-info"><div class="bar-name">${esc(n)}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${(v/maxV*100).toFixed(0)}%"></div></div></div><div class="bar-val" style="${cls==='red'?'color:var(--red)':''}">${v}</div></div>`;
   document.getElementById('topSell').innerHTML=sorted.slice(0,6).map(([n,v])=>barRow(n,v)).join('');
   document.getElementById('lowSell').innerHTML=sorted.slice(-5).reverse().map(([n,v])=>barRow(n,v,'red')).join('');
   const cats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
@@ -785,12 +793,12 @@ async function loadMesas(){
   if(!ords||!ords.length){el.innerHTML='<div class="loading-center" style="color:var(--muted)">🎉 Sin órdenes activas</div>';return;}
   el.innerHTML=ords.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).map(o=>{
     const items=(o.order_items||[]);
-    const itemsSummary=items.slice(0,3).map(i=>`${i.quantity}x ${i.product_name}`).join(', ')+(items.length>3?` +${items.length-3} más`:'');
+    const itemsSummary=items.slice(0,3).map(i=>`${i.quantity}x ${esc(i.product_name)}`).join(', ')+(items.length>3?` +${items.length-3} más`:'');
     const mins=Math.floor((Date.now()-new Date(o.created_at))/60000);
     return `<div class="mesa-card">
       <div class="mesa-head">
-        <div><div class="mesa-name">#${o.order_number} · ${o.table_label}</div><div style="font-size:10px;color:var(--muted)">⏱ ${mins<60?mins+'min':Math.floor(mins/60)+'h'}</div></div>
-        <div style="text-align:right"><div class="mesa-total">$${Number(o.total).toFixed(0)}</div><span class="mesa-status ${o.status}">${o.status}</span></div>
+        <div><div class="mesa-name">#${o.order_number} · ${esc(o.table_label)}</div><div style="font-size:10px;color:var(--muted)">⏱ ${mins<60?mins+'min':Math.floor(mins/60)+'h'}</div></div>
+        <div style="text-align:right"><div class="mesa-total">$${Number(o.total).toFixed(0)}</div><span class="mesa-status ${o.status}">${esc(o.status)}</span></div>
       </div>
       <div class="mesa-items">${itemsSummary}</div>
     </div>`;
@@ -894,7 +902,7 @@ async function loadMargins(){
       const pct=Number(r.margin_pct);
       const cls=pct>=60?'good':pct>=35?'mid':'bad';
       return `<div class="margin-row">
-        <div class="margin-name">${r.product_name}<div style="font-size:10px;color:var(--muted)">${r.units_sold} vendidos · $${Number(r.margin).toFixed(0)} ganancia</div></div>
+        <div class="margin-name">${esc(r.product_name)}<div style="font-size:10px;color:var(--muted)">${r.units_sold} vendidos · $${Number(r.margin).toFixed(0)} ganancia</div></div>
         <span class="margin-pct ${cls}">${pct.toFixed(0)}%</span>
       </div>`;
     }).join('');
@@ -902,7 +910,7 @@ async function loadMargins(){
 }
 
 async function loadExpenses(){
-  const since=rangeStartFin(finRange).slice(0,10);
+  const since=localDateStr(new Date(rangeStartFin(finRange)));
   const el=document.getElementById('expenseList');
   const {data,error}=await sb.from('expenses').select('*').gte('expense_date',since).order('expense_date',{ascending:false});
   if(error||!data){ el.innerHTML=''; return; }
@@ -915,13 +923,14 @@ async function loadExpenses(){
   </div>`).join('');
 }
 
-async function addExpense(){
+async function addExpense(btn){
   const type=document.getElementById('expType').value;
   const category=document.getElementById('expCategory').value;
   const amount=parseFloat(document.getElementById('expAmount').value);
   const date=document.getElementById('expDate').value || new Date().toISOString().slice(0,10);
   const desc=document.getElementById('expDesc').value.trim();
   if(!amount||amount<=0){ toast('Ingresa un monto válido'); return; }
+  if(btn) btn.disabled=true;
   try{
     const {error}=await sb.from('expenses').insert({type,category,amount,expense_date:date,description:desc||null,is_recurring:type==='fijo'});
     if(error) throw error;
@@ -930,10 +939,12 @@ async function addExpense(){
     document.getElementById('expDesc').value='';
     loadExpenses(); loadFinanzas();
   }catch(e){ console.error('addExpense error:',e); toast('❌ Error al registrar gasto'); }
+  finally{ if(btn) btn.disabled=false; }
 }
 
 async function loadMermaIngredients(){
-  const {data}=await sb.from('ingredients').select('id,name,unit').order('name');
+  const {data,error}=await sb.from('ingredients').select('id,name,unit').order('name');
+  if(error){ console.error('loadMermaIngredients error:',error); toast('❌ No se pudo cargar la lista de ingredientes'); }
   mermaIngredients=data||[];
   const sel=document.getElementById('mermaIngredient');
   if(sel) sel.innerHTML=mermaIngredients.map(i=>`<option value="${i.id}">${i.name} (${i.unit})</option>`).join('');
@@ -953,13 +964,14 @@ async function loadMermasList(){
   </div>`).join('');
 }
 
-async function addMerma(){
+async function addMerma(btn){
   const ingredient_id=document.getElementById('mermaIngredient').value;
   const qty=parseFloat(document.getElementById('mermaQty').value);
   const reason=document.getElementById('mermaReason').value;
   const notes=document.getElementById('mermaNotes').value.trim();
   if(!ingredient_id){ toast('Selecciona un ingrediente'); return; }
   if(!qty||qty<=0){ toast('Ingresa una cantidad válida'); return; }
+  if(btn) btn.disabled=true;
   try{
     const {data,error}=await sb.rpc('report_merma',{p_ingredient_id:ingredient_id,p_quantity:qty,p_reason:reason,p_notes:notes||null,p_reported_by:document.getElementById('abUser')?.textContent||'gerente'});
     if(error) throw error;
@@ -968,6 +980,7 @@ async function addMerma(){
     document.getElementById('mermaNotes').value='';
     loadMermasList(); loadFinanzas();
   }catch(e){ console.error('addMerma error:',e); toast('❌ Error al reportar merma'); }
+  finally{ if(btn) btn.disabled=false; }
 }
 
 
@@ -1049,6 +1062,7 @@ async function toggleCountable(id, val){
 // ===== CONFIRMACIÓN PROPIA (algunos navegadores móviles bloquean confirm() nativo) =====
 let _confirmResolve=null;
 function appConfirm(text){
+  if(_confirmResolve){ _confirmResolve(false); _confirmResolve=null; } // no dejar una confirmación previa colgada si se dispara otra antes de resolverse
   document.getElementById('confirmText').textContent=text;
   document.getElementById('confirmModal').style.display='flex';
   return new Promise(resolve=>{ _confirmResolve=resolve; });
@@ -1074,19 +1088,23 @@ async function loadMesaAdmin(){
     chips.innerHTML=html;
   }
 }
-async function addMesa(){
+async function addMesa(btn){
+  if(btn) btn.disabled=true;
   try{
     const {data,error}=await sb.rpc('add_restaurant_table');
     if(error) throw error;
     toast('✅ '+(data?.label||'Mesa')+' agregada');
     await loadMesaAdmin();
   }catch(e){ console.error('addMesa error:',e); toast('❌ Error al agregar mesa'); }
+  finally{ if(btn) btn.disabled=false; }
 }
-async function removeMesa(){
+async function removeMesa(btn){
   const mesas=mesasState.filter(t=>t.type==='mesa').sort((a,b)=>b.number-a.number);
   if(!mesas.length){ toast('No hay mesas para quitar'); return; }
   const last=mesas[0];
-  if(!confirm(`¿Quitar ${last.label}?`)) return;
+  const ok=await appConfirm(`¿Quitar ${last.label}?`);
+  if(!ok) return;
+  if(btn) btn.disabled=true;
   try{
     const {data,error}=await sb.rpc('remove_restaurant_table',{p_table_id:last.id});
     if(error) throw error;
@@ -1096,6 +1114,7 @@ async function removeMesa(){
     console.error('removeMesa error:',e);
     toast('⚠️ '+(e.message||'No se pudo quitar la mesa'));
   }
+  finally{ if(btn) btn.disabled=false; }
 }
 
 
@@ -1127,7 +1146,7 @@ function addComboRow(){
 document.addEventListener('click',e=>{
   if(e.target.classList?.contains('day-chip')) e.target.classList.toggle('on');
 });
-async function createPromo(){
+async function createPromo(btn){
   const name=document.getElementById('prName').value.trim();
   if(!name){ toast('Ponle nombre a la promo'); return; }
   const type=document.getElementById('prType').value;
@@ -1152,6 +1171,7 @@ async function createPromo(){
     const normal=payload.combo_items.reduce((s,ci)=>{const p=allProdsForPromos.find(x=>x.id===ci.product_id);return s+(p?Number(p.price)*ci.qty:0);},0);
     if(payload.combo_price>=normal){ toast('⚠️ El combo cuesta $'+payload.combo_price+' pero por separado son $'+normal.toFixed(0)+' — no es descuento'); return; }
   }
+  if(btn) btn.disabled=true;
   try{
     const {error}=await sb.rpc('create_promo',{p:payload});
     if(error) throw error;
@@ -1161,12 +1181,14 @@ async function createPromo(){
     document.getElementById('prComboPrice').value='';
     loadPromoList();
   }catch(e){ console.error('createPromo:',e); toast('❌ '+(e.message||'Error')); }
+  finally{ if(btn) btn.disabled=false; }
 }
 async function loadPromoList(){
   const {data}=await sb.from('promos').select('*').order('created_at',{ascending:false});
   const el=document.getElementById('promoList');
   if(!data||!data.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:4px 0 8px">Sin promociones creadas</div>'; return; }
-  const {data:liveData}=await sb.rpc('get_active_promos');
+  const {data:liveData,error:liveErr}=await sb.rpc('get_active_promos');
+  if(liveErr){ console.error('get_active_promos error:',liveErr); toast('⚠️ No se pudo verificar qué promos están activas ahora'); }
   const liveIds=new Set((liveData||[]).map(p=>p.id));
   el.innerHTML=data.map(p=>{
     let detail='';
@@ -1223,19 +1245,20 @@ async function loadCigarros(){
       </div>
       <div class="cig-stock ${stockCls}">${stock}</div>
       <input type="number" class="cig-restock" id="rs-${ing?.id}" placeholder="+" min="1">
-      <button class="cig-restock-btn" onclick="restockCigarroType('${ing?.id}')">Sumar</button>
+      <button class="cig-restock-btn" onclick="restockCigarroType('${ing?.id}',this)">Sumar</button>
       <label class="toggle" style="margin-left:4px"><input type="checkbox" ${p.available?'checked':''} onchange="toggleCigarroType('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
     </div>`;
   }).join('');
 }
 
-async function addCigarroType(){
+async function addCigarroType(btn){
   const name=document.getElementById('cigName').value.trim();
   const price=parseFloat(document.getElementById('cigPrice').value);
   const stock=parseFloat(document.getElementById('cigStock').value)||0;
   const cost=parseFloat(document.getElementById('cigCost').value)||0;
   if(!name){ toast('Escribe el tipo o marca'); return; }
   if(!price||price<=0){ toast('Ingresa un precio válido'); return; }
+  if(btn) btn.disabled=true;
   try{
     const {data,error}=await sb.rpc('add_cigarro',{p_name:name,p_price:price,p_stock:stock,p_cost:cost});
     if(error) throw error;
@@ -1246,13 +1269,15 @@ async function addCigarroType(){
     document.getElementById('cigCost').value='';
     loadCigarros();
   }catch(e){ console.error('addCigarroType error:',e); toast('❌ Error al cargar'); }
+  finally{ if(btn) btn.disabled=false; }
 }
 
-async function restockCigarroType(ingredientId){
+async function restockCigarroType(ingredientId,btn){
   if(!ingredientId||ingredientId==='undefined'){ toast('Error: tipo inválido'); return; }
   const input=document.getElementById('rs-'+ingredientId);
   const qty=parseFloat(input.value);
   if(!qty||qty<=0){ toast('Ingresa una cantidad válida'); return; }
+  if(btn) btn.disabled=true;
   try{
     const {error}=await sb.rpc('restock_cigarro',{p_ingredient_id:ingredientId,p_add_qty:qty});
     if(error) throw error;
@@ -1260,6 +1285,7 @@ async function restockCigarroType(ingredientId){
     input.value='';
     loadCigarros();
   }catch(e){ console.error('restockCigarroType error:',e); toast('❌ Error al sumar stock'); }
+  finally{ if(btn) btn.disabled=false; }
 }
 
 async function toggleCigarroType(productId, val){
