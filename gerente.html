@@ -14,9 +14,9 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#000;--e:#0E0E0E;--e2:#161616;
-  --red:#FF1E1E;--red-d:#C70000;--lime:#B6FF1A;--lime-g:rgba(182,255,26,.3);
-  --white:#FFF;--muted:#B8B8B8;--beer:#FFC233;--green:#4ADE80;
+  --bg:#0B0705;--e:#1F140F;--e2:#291C14;
+  --red:#E8543F;--red-d:#C23A28;--lime:#D9A441;--lime-g:rgba(217,164,65,.3);
+  --white:#FBF4EA;--muted:#B8AB97;--beer:#FFC233;--green:#4ADE80;
   --r:14px;--pill:999px;--soft:cubic-bezier(.22,.61,.36,1)
 }
 html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -24,9 +24,9 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 /* LOGIN */
 #loginPage{position:fixed;inset:0;z-index:999;background:radial-gradient(ellipse 70% 50% at 50% 45%,rgba(199,0,0,.12),transparent),#000;display:flex;align-items:center;justify-content:center;padding:24px}
 #loginPage.gone{display:none}
-.lp{background:var(--e);border-radius:24px;padding:36px 28px;max-width:340px;width:100%;border:1px solid rgba(255,30,30,.2);text-align:center}
+.lp{background:var(--e);border-radius:24px;padding:36px 28px;max-width:340px;width:100%;border:1px solid rgba(232,84,63,.2);text-align:center}
 .lp-crown{font-size:40px;margin-bottom:12px}
-.lp-logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:var(--red);text-shadow:0 0 20px rgba(255,30,30,.4)}
+.lp-logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:var(--red);text-shadow:0 0 20px rgba(232,84,63,.4)}
 .lp-sub{font-size:13px;color:var(--muted);margin-bottom:28px;margin-top:4px}
 .lp-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;text-align:left}
 .lp-inp{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:var(--white);font:400 15px 'Inter',sans-serif;padding:14px 16px;outline:none;margin-bottom:14px;transition:border-color .2s}
@@ -90,13 +90,13 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .inv-badge{padding:3px 8px;border-radius:var(--pill);font-size:9px;font-weight:800}
 .inv-badge.ok{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
 .inv-badge.warn{background:rgba(255,194,51,.15);color:var(--beer);border:1px solid rgba(255,194,51,.3)}
-.inv-badge.crit{background:rgba(255,30,30,.15);color:var(--red);border:1px solid rgba(255,30,30,.3)}
+.inv-badge.crit{background:rgba(232,84,63,.15);color:var(--red);border:1px solid rgba(232,84,63,.3)}
 .inv-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .inv-field label{font-size:9px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px}
 .inv-field input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font:600 14px 'Inter',sans-serif;padding:7px 10px;outline:none;text-align:center}
 .inv-field input:focus{border-color:var(--lime)}
-.inv-save{margin-top:10px;width:100%;padding:9px;border:none;border-radius:10px;background:rgba(182,255,26,.12);color:var(--lime);font:700 12px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(182,255,26,.3);transition:background .2s}
-.inv-save:active{background:rgba(182,255,26,.25)}
+.inv-save{margin-top:10px;width:100%;padding:9px;border:none;border-radius:10px;background:rgba(217,164,65,.12);color:var(--lime);font:700 12px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(217,164,65,.3);transition:background .2s}
+.inv-save:active{background:rgba(217,164,65,.25)}
 
 /* COMPRAS */
 .buy-card{background:var(--e);border-radius:var(--r);padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:10px}
@@ -116,9 +116,9 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .mesa-name{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white)}
 .mesa-total{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime)}
 .mesa-status{padding:3px 10px;border-radius:var(--pill);font-size:10px;font-weight:800}
-.mesa-status.nuevo{background:rgba(255,30,30,.15);color:var(--red)}
+.mesa-status.nuevo{background:rgba(232,84,63,.15);color:var(--red)}
 .mesa-status.preparando{background:rgba(255,194,51,.15);color:var(--beer)}
-.mesa-status.listo{background:rgba(182,255,26,.15);color:var(--lime)}
+.mesa-status.listo{background:rgba(217,164,65,.15);color:var(--lime)}
 .mesa-items{font-size:11px;color:var(--muted);line-height:1.7}
 /* Admin de mesas */
 .tbl-admin{background:var(--e);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06);margin-bottom:18px}
@@ -127,15 +127,15 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .tbl-stepper{display:flex;align-items:center;gap:14px;justify-content:center;margin:6px 0 4px}
 .tbl-step-btn{width:52px;height:52px;border-radius:14px;border:none;font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .1s}
 .tbl-step-btn:active{transform:scale(.92)}
-.tbl-minus{background:rgba(255,30,30,.12);color:var(--red);border:1.5px solid rgba(255,30,30,.3)}
-.tbl-plus{background:rgba(182,255,26,.12);color:var(--lime);border:1.5px solid rgba(182,255,26,.3)}
+.tbl-minus{background:rgba(232,84,63,.12);color:var(--red);border:1.5px solid rgba(232,84,63,.3)}
+.tbl-plus{background:rgba(217,164,65,.12);color:var(--lime);border:1.5px solid rgba(217,164,65,.3)}
 .tbl-count{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--white);min-width:60px;text-align:center;line-height:1}
 .tbl-count-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;text-align:center;margin-top:2px}
 .tbl-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;justify-content:center}
 .tbl-chip{font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
 .tbl-chip.barra{background:rgba(255,194,51,.12);color:var(--beer);border-color:rgba(255,194,51,.3)}
 /* Finanzas */
-.fin-hero{background:linear-gradient(145deg,rgba(182,255,26,.08),rgba(182,255,26,.02));border:1px solid rgba(182,255,26,.25);border-radius:18px;padding:18px;margin-bottom:14px;text-align:center}
+.fin-hero{background:linear-gradient(145deg,rgba(217,164,65,.08),rgba(217,164,65,.02));border:1px solid rgba(217,164,65,.25);border-radius:18px;padding:18px;margin-bottom:14px;text-align:center}
 .fin-hero-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
 .fin-hero-val{font-family:'Bebas Neue',sans-serif;font-size:42px;margin-top:4px}
 .fin-hero-val.pos{color:var(--lime)} .fin-hero-val.neg{color:var(--red)}
@@ -162,9 +162,9 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .margin-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
 .margin-name{font-size:12px;color:var(--white);flex:1}
 .margin-pct{font-family:'Bebas Neue',sans-serif;font-size:16px;padding:2px 8px;border-radius:8px}
-.margin-pct.good{color:var(--lime);background:rgba(182,255,26,.1)}
+.margin-pct.good{color:var(--lime);background:rgba(217,164,65,.1)}
 .margin-pct.mid{color:var(--beer);background:rgba(255,194,51,.1)}
-.margin-pct.bad{color:var(--red);background:rgba(255,30,30,.1)}
+.margin-pct.bad{color:var(--red);background:rgba(232,84,63,.1)}
 /* Cigarros */
 .cig-form{background:var(--e);border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:16px}
 .cig-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
@@ -179,8 +179,8 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .cig-stock{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--lime)}
 .cig-stock.low{color:var(--beer)} .cig-stock.zero{color:var(--red)}
 .cig-restock{width:46px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--white);font:600 12px 'Inter',sans-serif;padding:6px;outline:none;text-align:center}
-.cig-restock-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(182,255,26,.15);color:var(--lime);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(182,255,26,.3)}
-.cig-deduct-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(255,30,30,.12);color:var(--red);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,30,30,.3)}
+.cig-restock-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(217,164,65,.15);color:var(--lime);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(217,164,65,.3)}
+.cig-deduct-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(232,84,63,.12);color:var(--red);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(232,84,63,.3)}
 .cig-actions-row{display:flex;gap:6px;margin-top:8px;align-items:center;width:100%}
 /* Conteo de cierre */
 .count-cta{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#1a1a1a,#0d0d0d);border:1.5px solid rgba(91,168,255,.4);color:#5BA8FF;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:14px}
@@ -195,8 +195,8 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .cr-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12.5px}
 .cr-row .ok{color:var(--lime)} .cr-row .bad{color:var(--red);font-weight:800} .cr-row .extra{color:#5BA8FF}
 .cr-total{margin-top:10px;padding:10px;border-radius:10px;text-align:center;font-weight:800;font-size:14px}
-.cr-total.bad{background:rgba(255,30,30,.1);color:var(--red);border:1px solid rgba(255,30,30,.3)}
-.cr-total.ok{background:rgba(182,255,26,.08);color:var(--lime);border:1px solid rgba(182,255,26,.25)}
+.cr-total.bad{background:rgba(232,84,63,.1);color:var(--red);border:1px solid rgba(232,84,63,.3)}
+.cr-total.ok{background:rgba(217,164,65,.08);color:var(--lime);border:1px solid rgba(217,164,65,.25)}
 .count-hist{font-size:11px;color:var(--muted);padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between}
 .count-hist .miss{color:var(--red);font-weight:700}
 /* Promos */
@@ -210,7 +210,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .combo-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
 .combo-row select{flex:1}
 .combo-row input{width:52px;text-align:center}
-.combo-del{background:rgba(255,30,30,.12);color:var(--red);border:1px solid rgba(255,30,30,.3);border-radius:7px;font-weight:800;padding:6px 10px;cursor:pointer}
+.combo-del{background:rgba(232,84,63,.12);color:var(--red);border:1px solid rgba(232,84,63,.3);border-radius:7px;font-weight:800;padding:6px 10px;cursor:pointer}
 .promo-submit{width:100%;margin-top:12px;padding:13px;border:none;border-radius:11px;background:#FF8C00;color:#000;font:800 13px 'Inter',sans-serif;cursor:pointer}
 .promo-card{background:var(--e);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;align-items:center;gap:10px}
 .promo-card.live{border-color:rgba(255,140,0,.45)}
@@ -218,7 +218,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .promo-name{font-size:13px;font-weight:700;color:var(--white)}
 .promo-meta{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
 .promo-live{font-size:9px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.14);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px}
-.promo-del{background:rgba(255,30,30,.12);color:var(--red);border:1px solid rgba(255,30,30,.3);border-radius:8px;font-size:11px;font-weight:800;padding:6px 10px;cursor:pointer}
+.promo-del{background:rgba(232,84,63,.12);color:var(--red);border:1px solid rgba(232,84,63,.3);border-radius:8px;font-size:11px;font-weight:800;padding:6px 10px;cursor:pointer}
 .inv-countable{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-top:6px}
 
 /* PRODUCTOS TOGGLE */
@@ -231,7 +231,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .toggle input{opacity:0;width:0;height:0;position:absolute}
 .toggle-slider{position:absolute;inset:0;border-radius:13px;background:rgba(255,255,255,.12);cursor:pointer;transition:.3s}
 .toggle-slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;border-radius:50%;background:var(--muted);transition:.3s}
-.toggle input:checked+.toggle-slider{background:rgba(182,255,26,.3)}
+.toggle input:checked+.toggle-slider{background:rgba(217,164,65,.3)}
 .toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:var(--lime)}
 
 /* PAGO BREAKDOWN */
@@ -242,10 +242,10 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .pay-amount{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white);margin-top:4px}
 
 /* TOAST */
-.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--e);border:1px solid rgba(182,255,26,.4);color:var(--lime);font:600 12px 'Inter',sans-serif;padding:10px 20px;border-radius:var(--pill);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--e);border:1px solid rgba(217,164,65,.4);color:var(--lime);font:600 12px 'Inter',sans-serif;padding:10px 20px;border-radius:var(--pill);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 /* SPIN */
-.spin{display:inline-block;width:20px;height:20px;border:2px solid rgba(182,255,26,.2);border-top-color:var(--lime);border-radius:50%;animation:spin 1s linear infinite}
+.spin{display:inline-block;width:20px;height:20px;border:2px solid rgba(217,164,65,.2);border-top-color:var(--lime);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-center{text-align:center;padding:40px;color:var(--muted);font-size:13px}
 </style>
@@ -294,9 +294,9 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       </div>
       <div class="sec-title">📊 Top productos</div>
       <div class="bar-list" id="topProds"></div>
-      <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,30,30,.15)">
+      <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(232,84,63,.15)">
         <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center">⚠️ Zona de administración — elimina TODOS los pedidos</div>
-        <button onclick="resetAllOrders()" style="width:100%;padding:14px;background:rgba(255,30,30,.08);border:1.5px solid rgba(255,30,30,.35);border-radius:12px;color:var(--red);font:700 13px 'Inter',sans-serif;cursor:pointer;letter-spacing:.5px;margin-bottom:80px">🗑️ REINICIAR TODOS LOS PEDIDOS</button>
+        <button onclick="resetAllOrders()" style="width:100%;padding:14px;background:rgba(232,84,63,.08);border:1.5px solid rgba(232,84,63,.35);border-radius:12px;color:var(--red);font:700 13px 'Inter',sans-serif;cursor:pointer;letter-spacing:.5px;margin-bottom:80px">🗑️ REINICIAR TODOS LOS PEDIDOS</button>
       </div>
     </div>
     <!-- INVENTARIO -->
@@ -527,7 +527,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 </div>
 <!-- CONFIRMACIÓN PROPIA (reemplaza confirm() nativo) -->
 <div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px">
-  <div style="background:#0E0E0E;border:1.5px solid rgba(255,30,30,.4);border-radius:20px;padding:24px;max-width:340px;width:100%;text-align:center">
+  <div style="background:#0E0E0E;border:1.5px solid rgba(232,84,63,.4);border-radius:20px;padding:24px;max-width:340px;width:100%;text-align:center">
     <div style="font-size:36px;margin-bottom:8px" id="confirmIcon">⚠️</div>
     <div id="confirmText" style="font-size:14px;color:#fff;line-height:1.6;margin-bottom:18px"></div>
     <div style="display:flex;gap:10px">
