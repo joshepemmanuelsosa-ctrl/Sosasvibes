@@ -172,7 +172,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .cig-form input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 13px 'Inter',sans-serif;padding:9px 10px;outline:none}
 .cig-form-full{grid-column:1/-1}
 .cig-submit{width:100%;padding:12px;border:none;border-radius:10px;background:var(--lime);color:#0A0A00;font:800 13px 'Inter',sans-serif;cursor:pointer;margin-top:4px}
-.cig-card{background:var(--e);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.cig-card{background:var(--e);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .cig-info{flex:1;min-width:0}
 .cig-name{font-size:13px;font-weight:700;color:var(--white)}
 .cig-meta{font-size:10px;color:var(--muted);margin-top:2px}
@@ -180,6 +180,8 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .cig-stock.low{color:var(--beer)} .cig-stock.zero{color:var(--red)}
 .cig-restock{width:46px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--white);font:600 12px 'Inter',sans-serif;padding:6px;outline:none;text-align:center}
 .cig-restock-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(182,255,26,.15);color:var(--lime);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(182,255,26,.3)}
+.cig-deduct-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(255,30,30,.12);color:var(--red);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,30,30,.3)}
+.cig-actions-row{display:flex;gap:6px;margin-top:8px;align-items:center;width:100%}
 /* Conteo de cierre */
 .count-cta{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#1a1a1a,#0d0d0d);border:1.5px solid rgba(91,168,255,.4);color:#5BA8FF;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:14px}
 .count-panel{display:none;background:var(--e);border-radius:14px;padding:14px;border:1px solid rgba(91,168,255,.25);margin-bottom:16px}
@@ -544,13 +546,50 @@ const sb=createClient('https://izpuzcjsarncdvpkjbzp.supabase.co','eyJhbGciOiJIUz
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 // Fecha YYYY-MM-DD en hora LOCAL (evita el corrimiento de día que da toISOString().slice(0,10) en UTC)
 function localDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+// ===== ZONA HORARIA FIJA DEL NEGOCIO =====
+// El bar siempre opera en horario de América/Ciudad de México, sin importar en qué zona
+// horaria esté puesto el reloj/OS del dispositivo del gerente (celular viajando, mal
+// configurado, etc.). Usamos Intl.DateTimeFormat (nunca un offset UTC hardcodeado) para
+// obtener la hora real del negocio, así esto sigue siendo correcto aunque la zona algún
+// día reintrodujera horario de verano. Debe coincidir con promo_is_live() en Supabase,
+// que usa NOW() AT TIME ZONE 'America/Mexico_City'.
+const BIZ_TZ='America/Mexico_City';
+// Campos de fecha/hora (y,mo,d,h,mi,s) tal como se ven en `timeZone` para el instante `date`.
+function tzParts(date,timeZone=BIZ_TZ){
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(date);
+  const get=t=>parseInt(parts.find(p=>p.type===t).value,10);
+  let h=get('hour'); if(h===24) h=0; // algunos motores devuelven "24" para la medianoche
+  return {y:get('year'),mo:get('month'),d:get('day'),h,mi:get('minute'),s:get('second')};
+}
+// Convierte campos "wall-clock" (año,mes,día,hora,min,seg) de `timeZone` a un Date real
+// (el instante absoluto correcto), calculando el offset con Intl en vez de asumirlo fijo.
+function tzPartsToDate(y,mo,d,h,mi,s,timeZone=BIZ_TZ){
+  const guess=Date.UTC(y,mo-1,d,h,mi,s);
+  const seen=tzParts(new Date(guess),timeZone);
+  const seenUTC=Date.UTC(seen.y,seen.mo-1,seen.d,seen.h,seen.mi,seen.s);
+  return new Date(guess+(guess-seenUTC));
+}
+// "Ahora" expresado como campos wall-clock en la zona del negocio (para poder comparar
+// horas de corte sin que se meta la zona horaria del dispositivo).
+function nowInBizTz(){ return tzParts(new Date()); }
+// Fecha YYYY-MM-DD (en la zona horaria del negocio) para el instante `date`.
+function mxDateStr(date){ const p=tzParts(date); return `${p.y}-${String(p.mo).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`; }
+
 // "Día de negocio": empieza a esta hora, no a medianoche, para que una noche que cierra
 // a las 2-4am no se cuente como si fuera ya el "Hoy" siguiente (debe coincidir con el
 // mismo CORTE_CUTOFF_HOUR usado en bartender.html para que ambos paneles cuadren).
+// Ancla el corte a la hora real de América/Ciudad de México, no al reloj del dispositivo.
 const CORTE_CUTOFF_HOUR = 6;
-function businessDayStart(d=new Date(), cutoffHour=CORTE_CUTOFF_HOUR){
-  const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),cutoffHour,0,0,0);
-  if(d<start) start.setDate(start.getDate()-1);
+function businessDayStart(cutoffHour=CORTE_CUTOFF_HOUR){
+  const p=nowInBizTz();
+  let start=tzPartsToDate(p.y,p.mo,p.d,cutoffHour,0,0);
+  if(new Date()<start){
+    // Aún no llega el corte de hoy → el día de negocio empezó ayer a esta hora.
+    // Date.UTC normaliza automáticamente fin de mes/año al restar 1 al día.
+    const prev=new Date(Date.UTC(p.y,p.mo-1,p.d-1));
+    start=tzPartsToDate(prev.getUTCFullYear(),prev.getUTCMonth()+1,prev.getUTCDate(),cutoffHour,0,0);
+  }
   return start;
 }
 
@@ -603,10 +642,13 @@ function subscribeRealtime(){
 
 // ===== DASHBOARD =====
 function rangeStart(r){
-  const now=new Date();
-  if(r==='today') return businessDayStart(now).toISOString();
-  if(r==='week'){const d=new Date(now);d.setDate(d.getDate()-7);return d.toISOString();}
-  if(r==='month'){const d=new Date(now);d.setDate(d.getDate()-30);return d.toISOString();}
+  if(r==='today') return businessDayStart().toISOString();
+  // "Semana"/"Mes" son ventanas rodantes de duración fija (168h/720h) contadas desde
+  // el instante real actual — restar milisegundos es intrínsecamente independiente de
+  // cualquier zona horaria (del dispositivo o del negocio), a diferencia de sumar/restar
+  // días de calendario con getDate()/setDate() locales.
+  if(r==='week') return new Date(Date.now()-7*24*60*60*1000).toISOString();
+  if(r==='month') return new Date(Date.now()-30*24*60*60*1000).toISOString();
 }
 function setRange(btn){
   document.querySelectorAll('.fp[data-range]').forEach(b=>b.classList.remove('on'));
@@ -856,10 +898,11 @@ async function doFactoryReset(){
 let finRange='today', finTab='margenes', mermaIngredients=[];
 
 function rangeStartFin(r){
-  const now=new Date();
-  if(r==='today') return businessDayStart(now).toISOString();
-  if(r==='week'){const d=new Date(now);d.setDate(d.getDate()-7);return d.toISOString();}
-  if(r==='month'){const d=new Date(now);d.setDate(d.getDate()-30);return d.toISOString();}
+  if(r==='today') return businessDayStart().toISOString();
+  // Ver comentario en rangeStart(): ventana rodante en milisegundos, sin dependencia
+  // de zona horaria.
+  if(r==='week') return new Date(Date.now()-7*24*60*60*1000).toISOString();
+  if(r==='month') return new Date(Date.now()-30*24*60*60*1000).toISOString();
 }
 function setFinRange(btn){
   document.querySelectorAll('.fp[data-fr]').forEach(b=>b.classList.remove('on'));
@@ -919,7 +962,7 @@ async function loadMargins(){
 }
 
 async function loadExpenses(){
-  const since=localDateStr(new Date(rangeStartFin(finRange)));
+  const since=mxDateStr(new Date(rangeStartFin(finRange)));
   const el=document.getElementById('expenseList');
   const {data,error}=await sb.from('expenses').select('*').gte('expense_date',since).order('expense_date',{ascending:false});
   if(error||!data){ el.innerHTML=''; return; }
@@ -1130,10 +1173,20 @@ async function removeMesa(btn){
 
 // ===== PROMOCIONES =====
 let allProdsForPromos=[];
+// Lista SIN filtrar por `available` — solo para resolver nombres de productos de promos
+// YA EXISTENTES. Si un producto referenciado por una promo se desactiva después (toggleProd),
+// allProdsForPromos ya no lo tendría y la tarjeta de la promo mostraría "producto"/"?" en vez
+// de su nombre real. Esta lista sí lo incluye. NO usar para los selects de crear promo/combo:
+// esos deben seguir ofreciendo solo productos actualmente disponibles.
+let allProdsForPromoLookup=[];
 const DAY_NAMES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 async function loadPromoSection(){
-  const {data}=await sb.from('products').select('id,name,price,category').eq('available',true).neq('category','cigarros').order('category').order('sort_order');
+  const [{data},{data:allData}]=await Promise.all([
+    sb.from('products').select('id,name,price,category').eq('available',true).neq('category','cigarros').order('category').order('sort_order'),
+    sb.from('products').select('id,name,price,category').neq('category','cigarros').order('category').order('sort_order')
+  ]);
   allProdsForPromos=data||[];
+  allProdsForPromoLookup=allData||[];
   const opts=allProdsForPromos.map(p=>`<option value="${p.id}">${p.name} — $${Number(p.price).toFixed(0)}</option>`).join('');
   document.getElementById('prProduct').innerHTML=opts;
   if(!document.getElementById('comboRows').children.length){ addComboRow(); addComboRow(); }
@@ -1202,10 +1255,10 @@ async function loadPromoList(){
   el.innerHTML=data.map(p=>{
     let detail='';
     if(p.type==='descuento'){
-      const prod=allProdsForPromos.find(x=>x.id===p.product_id);
+      const prod=allProdsForPromoLookup.find(x=>x.id===p.product_id);
       detail=`−${Number(p.discount_pct)}% en ${prod?prod.name:'producto'}`;
     }else{
-      const parts=(p.combo_items||[]).map(ci=>{const pr=allProdsForPromos.find(x=>x.id===ci.product_id);return (ci.qty>1?ci.qty+'x ':'')+(pr?pr.name:'?');});
+      const parts=(p.combo_items||[]).map(ci=>{const pr=allProdsForPromoLookup.find(x=>x.id===ci.product_id);return (ci.qty>1?ci.qty+'x ':'')+(pr?pr.name:'?');});
       detail=parts.join(' + ')+' por $'+Number(p.combo_price).toFixed(0);
     }
     const daysTxt=(p.days||[]).length===7?'Todos los días':(p.days||[]).map(d=>DAY_NAMES[d]).join(', ');
@@ -1249,13 +1302,16 @@ async function loadCigarros(){
     const stockCls=stock===0?'zero':stock<=5?'low':'';
     return `<div class="cig-card">
       <div class="cig-info">
-        <div class="cig-name">🚬 ${p.name} ${!p.available?'<span style="color:var(--red);font-size:10px">(oculto)</span>':''}</div>
+        <div class="cig-name">🚬 ${esc(p.name)} ${!p.available?'<span style="color:var(--red);font-size:10px">(oculto)</span>':''}</div>
         <div class="cig-meta">$${Number(p.price).toFixed(0)} c/u${ing?' · costo $'+Number(ing.cost_per_unit).toFixed(0):''}</div>
       </div>
       <div class="cig-stock ${stockCls}">${stock}</div>
-      <input type="number" class="cig-restock" id="rs-${ing?.id}" placeholder="+" min="1">
-      <button class="cig-restock-btn" onclick="restockCigarroType('${ing?.id}',this)">Sumar</button>
       <label class="toggle" style="margin-left:4px"><input type="checkbox" ${p.available?'checked':''} onchange="toggleCigarroType('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
+      <div class="cig-actions-row">
+        <input type="number" class="cig-restock" id="rs-${ing?.id}" placeholder="cant." min="1">
+        <button class="cig-restock-btn" onclick="restockCigarroType('${ing?.id}',this)">+ Sumar</button>
+        <button class="cig-deduct-btn" onclick="deductCigarroType('${ing?.id}','${p.name.replace(/'/g,"\\'")}',this)">− Descontar</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1297,6 +1353,26 @@ async function restockCigarroType(ingredientId,btn){
   finally{ if(btn) btn.disabled=false; }
 }
 
+async function deductCigarroType(ingredientId, name, btn){
+  if(!ingredientId||ingredientId==='undefined'){ toast('Error: tipo inválido'); return; }
+  const input=document.getElementById('rs-'+ingredientId);
+  const qty=parseFloat(input.value);
+  if(!qty||qty<=0){ toast('Ingresa una cantidad válida'); return; }
+  const ok=await appConfirm('¿Descontar '+qty+' de '+name+' del inventario?');
+  if(!ok) return;
+  if(btn) btn.disabled=true;
+  try{
+    const {error}=await sb.rpc('deduct_cigarro',{p_ingredient_id:ingredientId,p_remove_qty:qty});
+    if(error) throw error;
+    toast('✅ −'+qty+' descontadas del stock');
+    input.value='';
+    loadCigarros();
+  }catch(e){
+    console.error('deductCigarroType error:',e);
+    toast('❌ '+(e.message?.includes('No puedes descontar')?'No hay suficiente stock':'Error al descontar'));
+  }
+  finally{ if(btn) btn.disabled=false; }
+}
 async function toggleCigarroType(productId, val){
   try{
     const {error}=await sb.rpc('toggle_cigarro',{p_product_id:productId,p_available:val});

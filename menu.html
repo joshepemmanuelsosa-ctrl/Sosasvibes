@@ -803,9 +803,10 @@ const splashDur = window.matchMedia('(prefers-reduced-motion:reduce)').matches ?
 // ---- LOAD ON SPLASH ----
 // ---- SESIÓN PERSISTENTE (sobrevive cierres del navegador) ----
 const SV_KEY='sv_session_v1';
+const SV_MAX_AGE_MS = 6*60*60*1000; // 6 horas: cubre una visita larga de bar sin arrastrar sesiones de días/turnos anteriores en un dispositivo compartido
 function saveSession(){
   try{
-    if(currentOrderId) localStorage.setItem(SV_KEY, JSON.stringify({orderId:currentOrderId, table:selectedTable}));
+    if(currentOrderId) localStorage.setItem(SV_KEY, JSON.stringify({orderId:currentOrderId, table:selectedTable, ts:Date.now()}));
   }catch(e){}
 }
 function clearSession(){ try{ localStorage.removeItem(SV_KEY); }catch(e){} }
@@ -814,6 +815,8 @@ async function tryRestoreSession(){
   let s=null;
   try{ s=JSON.parse(localStorage.getItem(SV_KEY)||'null'); }catch(e){ clearSession(); return false; }
   if(!s || !s.orderId) return false;
+  // Sesión demasiado vieja (o sin timestamp, de una versión anterior): no arrastrar el pedido de alguien más en un dispositivo compartido
+  if(!s.ts || (Date.now()-s.ts) > SV_MAX_AGE_MS){ clearSession(); return false; }
   let ord=null;
   try{
     const {data,error}=await sb.from('orders').select('*').eq('id',s.orderId).single();
@@ -1064,7 +1067,15 @@ document.getElementById('ovl').addEventListener('click', ()=>{ closeCart(); clos
 function renderCartItems(){
   const items = Object.values(cart);
   const el = document.getElementById('csItems');
-  if(!items.length){ el.innerHTML='<p style="color:var(--muted);padding:20px 0;text-align:center">Tu carrito está vacío</p>'; return; }
+  const orderBtn = document.querySelector('.cs-order-btn');
+  if(!items.length){
+    el.innerHTML='<p style="color:var(--muted);padding:20px 0;text-align:center">Tu carrito está vacío</p>';
+    document.getElementById('csDiscount').style.display='none';
+    document.getElementById('csTotal').textContent='$0';
+    if(orderBtn) orderBtn.disabled=true;
+    return;
+  }
+  if(orderBtn) orderBtn.disabled=false;
   el.innerHTML = items.map(l=>{
     const escLabel = l.escarchadoFull ? `<div class="esc-badge">🍺🧂 ${l.escarchadoFull}</div>` : '';
     const lineP = (l.product.price+lineExtra(l))*l.qty;
@@ -1166,6 +1177,7 @@ function selectTable(btn, id, label, type){
 
 async function submitOrder(){
   if(!selTable) return;
+  if(!Object.keys(cart).length){ closeOrder(); return; }
   const btn = document.getElementById('omConfirm');
   btn.disabled=true; btn.textContent='Enviando...';
   try{
@@ -1219,6 +1231,7 @@ async function submitExtraItems(btn){
   fab.style.pointerEvents = '';
   if(btn){ btn.disabled=false; btn.textContent = isAddingToExisting ? '⚡ Agregar como Extra' : 'Ordenar 🍺'; }
 }
+const STATUS_RANK = {nuevo:0, preparando:1, listo:2, entregado:3};
 function subscribeToOrder(oid){
   sb.channel('order-'+oid)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders',filter:`id=eq.${oid}`},
@@ -1234,7 +1247,12 @@ function subscribeToOrder(oid){
         return;
       }
       if(payload.new.bill_requested && !billRequested){ applyBillRequestedUI(); }
-      updateStatusUI(payload.new.status);
+      // Ignorar actualizaciones fuera de orden: la entrega realtime no garantiza el orden de llegada
+      const newRank = STATUS_RANK[payload.new.status];
+      const curRank = STATUS_RANK[currentOrderStatus];
+      if(newRank===undefined || curRank===undefined || newRank>=curRank){
+        updateStatusUI(payload.new.status);
+      }
       if(payload.new.payment_status==='pagado'){ lockOrderAsPaid(); }
     })
     .subscribe();
