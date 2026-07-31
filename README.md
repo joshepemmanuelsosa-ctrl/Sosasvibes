@@ -6,15 +6,15 @@ Sistema completo de operación para el garden bar **Sosa's Vibes**: pedidos por 
 
 | Archivo | Quién lo usa | URL |
 |---|---|---|
-| `menu.html` | Clientes (QR en mesa) | `/menu.html` |
-| `bartender.html` | Bartender (requiere login) | `/bartender.html` |
-| `gerente.html` | Gerente (requiere login) | `/gerente.html` |
+| `menu.html` | Clientes (QR en mesa) | `https://joshepemmanuelsosa-ctrl.github.io/Sosasvibes/menu.html` |
+| `bartender.html` | Bartender (requiere login) | `https://joshepemmanuelsosa-ctrl.github.io/Sosasvibes/bartender.html` |
+| `gerente.html` | Gerente (requiere login) | `https://joshepemmanuelsosa-ctrl.github.io/Sosasvibes/gerente.html` |
 
 ## ⚙️ Stack
 
 - **Frontend:** HTML/CSS/JS vanilla (sin frameworks, sin build)
 - **Backend:** Supabase (PostgreSQL + Realtime + Auth) — toda la lógica crítica vive en funciones RPC del servidor
-- **Hosting:** Netlify con deploy automático desde este repositorio
+- **Hosting:** GitHub Pages, deploy automático desde la rama `main` de este repositorio (requiere repo público — sin esto, GitHub no sirve Pages gratis)
 
 ## 🔑 Funciones principales
 
@@ -27,12 +27,13 @@ Sistema completo de operación para el garden bar **Sosa's Vibes**: pedidos por 
 - Conteo de cierre ciego (anti-robo) con historial de faltantes en $
 - Alertas de stock bajo en el panel del bartender
 - Módulo de cigarros, corte de caja con propinas, finanzas con márgenes
+- Día de negocio con corte a las 6:00am (no medianoche) — una noche que cierra a las 2-4am no se parte en dos cortes
 
 ## 🚀 Cómo actualizar
 
-1. Edita el archivo en GitHub (o reemplázalo con "Upload files")
-2. Netlify detecta el cambio y publica solo — en ~1 minuto está en producción
-3. Para regresar a una versión anterior: pestaña **History** del archivo → ver versión → restaurar
+1. Edita el archivo en GitHub (o reemplázalo con "Upload files"), o haz push a `main`
+2. GitHub Pages detecta el cambio y publica solo — en 1-2 minutos está en producción
+3. Para regresar a una versión anterior: pestaña **History** del archivo → ver versión → restaurar, o `git revert`
 
 ## ⚠️ Reglas del proyecto
 

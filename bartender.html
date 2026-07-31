@@ -420,12 +420,46 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function lockBtn(el){ if(!el) return; el.dataset.busy='1'; el.disabled=true; el.style.opacity='.5'; el.style.pointerEvents='none'; }
 function unlockBtn(el){ if(!el) return; el.dataset.busy='0'; el.disabled=false; el.style.opacity=''; el.style.pointerEvents=''; }
 
+// ===== ZONA HORARIA FIJA DEL NEGOCIO =====
+// El bar siempre opera en horario de América/Ciudad de México, sin importar en qué zona
+// horaria esté puesto el reloj/OS del dispositivo del bartender (celular mal configurado,
+// etc.). Usamos Intl.DateTimeFormat (nunca un offset UTC hardcodeado) para obtener la hora
+// real del negocio, así esto sigue siendo correcto aunque la zona algún día reintrodujera
+// horario de verano. Debe coincidir con promo_is_live() en Supabase, que usa
+// NOW() AT TIME ZONE 'America/Mexico_City', y con gerente.html para que ambos paneles cuadren.
+const BIZ_TZ='America/Mexico_City';
+// Campos de fecha/hora (y,mo,d,h,mi,s) tal como se ven en `timeZone` para el instante `date`.
+function tzParts(date,timeZone=BIZ_TZ){
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(date);
+  const get=t=>parseInt(parts.find(p=>p.type===t).value,10);
+  let h=get('hour'); if(h===24) h=0; // algunos motores devuelven "24" para la medianoche
+  return {y:get('year'),mo:get('month'),d:get('day'),h,mi:get('minute'),s:get('second')};
+}
+// Convierte campos "wall-clock" (año,mes,día,hora,min,seg) de `timeZone` a un Date real
+// (el instante absoluto correcto), calculando el offset con Intl en vez de asumirlo fijo.
+function tzPartsToDate(y,mo,d,h,mi,s,timeZone=BIZ_TZ){
+  const guess=Date.UTC(y,mo-1,d,h,mi,s);
+  const seen=tzParts(new Date(guess),timeZone);
+  const seenUTC=Date.UTC(seen.y,seen.mo-1,seen.d,seen.h,seen.mi,seen.s);
+  return new Date(guess+(guess-seenUTC));
+}
+// "Ahora" expresado como campos wall-clock en la zona del negocio (para poder comparar
+// horas de corte sin que se meta la zona horaria del dispositivo).
+function nowInBizTz(){ return tzParts(new Date()); }
+
 // ===== UTIL: "día de negocio" — el corte no debe resetearse a medianoche si el bar
 // sigue abierto (a veces cierra a las 2-4am). El día empieza a esta hora, no a las 00:00.
+// Ancla el corte a la hora real de América/Ciudad de México, no al reloj del dispositivo.
 const CORTE_CUTOFF_HOUR = 6;
-function businessDayStart(d=new Date(), cutoffHour=CORTE_CUTOFF_HOUR){
-  const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),cutoffHour,0,0,0);
-  if(d<start) start.setDate(start.getDate()-1);
+function businessDayStart(cutoffHour=CORTE_CUTOFF_HOUR){
+  const p=nowInBizTz();
+  let start=tzPartsToDate(p.y,p.mo,p.d,cutoffHour,0,0);
+  if(new Date()<start){
+    // Aún no llega el corte de hoy → el día de negocio empezó ayer a esta hora.
+    // Date.UTC normaliza automáticamente fin de mes/año al restar 1 al día.
+    const prev=new Date(Date.UTC(p.y,p.mo-1,p.d-1));
+    start=tzPartsToDate(prev.getUTCFullYear(),prev.getUTCMonth()+1,prev.getUTCDate(),cutoffHour,0,0);
+  }
   return start;
 }
 
@@ -444,8 +478,17 @@ async function doLogout(){
   await sb.auth.signOut();
   document.getElementById('appPage').classList.remove('on');
   document.getElementById('loginPage').classList.remove('gone');
-  if(orderSub) sb.removeChannel(orderSub);
+  if(orderSub){ sb.removeChannel(orderSub); orderSub=null; }
 }
+// Si la sesión muere a media turno (expira/falla el refresh), regresar a un
+// login funcional en vez de dejar que cada acción falle en silencio.
+sb.auth.onAuthStateChange((event)=>{
+  if(event==='SIGNED_OUT'||event==='TOKEN_REFRESH_FAILED'){
+    document.getElementById('appPage').classList.remove('on');
+    document.getElementById('loginPage').classList.remove('gone');
+    if(orderSub){ sb.removeChannel(orderSub); orderSub=null; }
+  }
+});
 function enterApp(user){
   document.getElementById('loginPage').classList.add('gone');
   document.getElementById('appPage').classList.add('on');
@@ -458,9 +501,12 @@ document.getElementById('lpPass').addEventListener('keydown',e=>{if(e.key==='Ent
 
 // ===== INIT =====
 async function initApp(){
+  // Arrancar el canal realtime ANTES/EN PARALELO con la carga inicial: si el
+  // snapshot inicial se toma antes de que el canal quede SUBSCRIBED, cualquier
+  // orden creada en ese hueco se reconcilia dentro del callback de subscribeOrders().
+  subscribeOrders();
   await Promise.all([loadOrders(), loadProducts(), loadTables()]);
   checkLowStock(); setInterval(checkLowStock, 5*60*1000);
-  subscribeOrders();
   renderOrdersList();
   renderManualProds();
   renderManualTables();
@@ -569,10 +615,31 @@ function subscribeOrders(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'order_items'},async payload=>{
       try{
         const ord=orders.find(o=>o.id===payload.new.order_id);
-        if(ord){ ord.order_items=ord.order_items||[]; ord.order_items.push(payload.new); renderOrdersList(); }
-      }catch(e){}
+        if(ord){
+          ord.order_items=ord.order_items||[];
+          ord.order_items.push(payload.new);
+          renderOrdersList();
+        } else {
+          // La orden padre todavía no llegó localmente (carrera con su propio
+          // INSERT) — en vez de descartar el item, traer esa orden puntual y
+          // fusionarla; si algo falla, recargar todo como respaldo simple.
+          const {data:missingOrd,error:mErr}=await sb.from('orders').select('*').eq('id',payload.new.order_id).single();
+          if(mErr || !missingOrd){ await loadOrders(); renderOrdersList(); updateCounts(); return; }
+          const {data:missingItems}=await sb.from('order_items').select('*').eq('order_id',payload.new.order_id);
+          missingOrd.order_items=missingItems||[];
+          if(!orders.some(o=>o.id===missingOrd.id)) orders.unshift(missingOrd);
+          renderOrdersList(); updateCounts();
+        }
+      }catch(e){ console.error('order_items INSERT handler error:',e); await loadOrders(); renderOrdersList(); updateCounts(); }
     })
-    .subscribe((status)=>{ console.log('Realtime status:',status); });
+    .subscribe((status)=>{
+      console.log('Realtime status:',status);
+      if(status==='SUBSCRIBED'){
+        // Reconciliar cualquier orden creada en el hueco entre el snapshot
+        // inicial y el momento en que el canal quedó realmente suscrito.
+        loadOrders().then(()=>{ renderOrdersList(); updateCounts(); });
+      }
+    });
 }
 
 function updateCounts(){
@@ -596,11 +663,27 @@ function switchStatus(btn){
 function renderOrdersList(){
   const filtered=orders.filter(o=>o.status===curStatus);
   const el=document.getElementById('ordersList');
+  // Capturar qué tarjetas tienen UI abierta ANTES de destruir el DOM, para no
+  // colapsar todo (tarjeta expandida, panel de agregar productos, panel de
+  // método de pago) cada vez que un evento realtime ajeno dispara un re-render.
+  const expandedIds=Array.from(el.querySelectorAll('.ocard.expanded')).map(c=>c.id.replace(/^oc-/,''));
+  const openPanelIds=Array.from(el.querySelectorAll('.oe-panel.on')).map(p=>p.id.replace(/^oe-/,''));
+  const openPayIds=Array.from(el.querySelectorAll('[id^="pm-"]')).filter(p=>p.style.display==='flex').map(p=>p.id.replace(/^pm-/,''));
   if(!filtered.length){
     el.innerHTML=`<div class="empty"><div class="empty-icon">${curStatus==='nuevo'?'✅':curStatus==='preparando'?'🍳':'🎉'}</div><p>No hay órdenes ${curStatus==='nuevo'?'nuevas':curStatus==='preparando'?'en preparación':'listas'}</p></div>`;
     return;
   }
   el.innerHTML=filtered.map(o=>orderCardHTML(o)).join('');
+  // Reaplicar el estado de UI abierta a las tarjetas que sigan presentes.
+  expandedIds.forEach(id=>document.getElementById('oc-'+id)?.classList.add('expanded'));
+  openPanelIds.forEach(id=>{
+    const panel=document.getElementById('oe-'+id);
+    if(panel){ panel.classList.add('on'); renderEditProds(id,''); }
+  });
+  openPayIds.forEach(id=>{
+    const box=document.getElementById('pm-'+id);
+    if(box) box.style.display='flex';
+  });
 }
 
 const PAY_ICO={efectivo:'💵',tarjeta:'💳',transferencia:'📲'};
@@ -1003,9 +1086,24 @@ async function submitManualOrder(){
   if(!moSelTable||!Object.keys(moCart).length) return;
   const btn=document.getElementById('moSubmit');
   const isWalkin = !moSelTable.id;
-  const existing = isWalkin ? null : findActiveOrderForTable(moSelTable.id);
+  let existing = isWalkin ? null : findActiveOrderForTable(moSelTable.id);
   btn.disabled=true; btn.textContent=existing?'Agregando...':'Creando...';
   try{
+    if(!isWalkin){
+      // El array local `orders` puede estar desactualizado (otra terminal
+      // pudo abrir/cerrar la cuenta de esta mesa recientemente) — antes de
+      // decidir "agregar a existente" vs "crear nueva", confirmar con una
+      // consulta fresca que revise los mismos campos que findActiveOrderForTable.
+      const {data:freshActive,error:freshErr}=await sb.from('orders').select('*')
+        .eq('table_id',moSelTable.id)
+        .eq('payment_status','pendiente')
+        .in('status',['nuevo','preparando','listo'])
+        .order('created_at',{ascending:false})
+        .limit(1);
+      if(freshErr){ console.error('submitManualOrder fresh check error:',freshErr); }
+      else { existing = (freshActive&&freshActive.length) ? freshActive[0] : null; }
+      btn.textContent=existing?'Agregando...':'Creando...';
+    }
     const items=Object.values(moCart).map(c=>({product_id:c.product.id, quantity:c.qty, ...(c.cfg?{escarchado:c.cfg.escarchado, polvo:c.cfg.polvo, limon:c.cfg.limon, clamato:c.cfg.clamato, beer_choice:c.cfg.beer_choice, salsa:c.cfg.salsa}:{})}));
     let result;
     if(existing){
@@ -1041,7 +1139,7 @@ function setRange(btn){
 }
 function rangeStart(){
   const now=new Date();
-  if(curRange==='today') return businessDayStart(now).toISOString();
+  if(curRange==='today') return businessDayStart().toISOString();
   if(curRange==='week'){ now.setDate(now.getDate()-7); return now.toISOString(); }
   if(curRange==='month'){ now.setDate(now.getDate()-30); return now.toISOString(); }
 }
@@ -1097,8 +1195,7 @@ async function loadAnalytics(){
 async function loadCorte(){
   // Día de negocio: empieza a las CORTE_CUTOFF_HOUR (no a medianoche), para que una
   // noche que cierra a las 2-4am no se parta en dos cortes distintos.
-  const n=new Date();
-  const bizDay=businessDayStart(n);
+  const bizDay=businessDayStart();
   const dayStart=bizDay.toISOString();
   document.getElementById('corteDate').textContent=bizDay.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const {data:ords}=await sb.from('orders').select('*, order_items(*)').gte('created_at',dayStart);
