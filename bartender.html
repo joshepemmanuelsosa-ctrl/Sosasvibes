@@ -183,7 +183,18 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .mo-search{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:var(--white);font:400 14px 'Inter',sans-serif;padding:12px 16px;outline:none;margin-bottom:12px}
 .mo-search::placeholder{color:var(--muted)}
 .mo-search:focus{border-color:var(--lime)}
-.mo-prod-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin-bottom:16px}
+.mo-prod-list{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto;margin-bottom:16px}
+.mo-cats{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.mo-cat{flex:0 0 auto;padding:9px 13px;border-radius:20px;border:1.5px solid rgba(255,255,255,.12);background:transparent;color:var(--white);font:700 12px 'Inter',sans-serif;cursor:pointer;white-space:nowrap}
+.mo-cat.on{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
+.mo-tinfo{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg-e);border:1px solid rgba(217,164,65,.25);border-radius:10px;padding:9px 12px;margin:-8px 0 12px;font-size:12px;color:var(--white)}
+.mo-tinfo b{color:var(--lime)}
+.mo-tinfo button{background:rgba(217,164,65,.15);border:1px solid rgba(217,164,65,.4);border-radius:8px;color:var(--lime);font:700 11px 'Inter',sans-serif;padding:7px 10px;cursor:pointer;white-space:nowrap}
+.mo-ci-q{display:flex;align-items:center;gap:6px}
+.mo-ci-q button{width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:var(--white);font-size:15px;font-weight:800;cursor:pointer;line-height:1}
+.mo-ci-q span{min-width:18px;text-align:center;font-weight:700;font-size:13px}
+.mop-add.has{background:var(--lime);color:#0A0A00;font:800 12px 'Inter',sans-serif}
+.mo-submit-bar{position:sticky;bottom:0;margin:0 -16px -16px;padding:10px 16px 14px;background:linear-gradient(to top,#050505 70%,transparent);z-index:5}
 .mop{display:flex;align-items:center;gap:10px;background:var(--bg-e);border-radius:10px;padding:10px 12px;cursor:pointer;border:1px solid rgba(255,255,255,.05);transition:border-color .2s}
 .mop:active{border-color:var(--lime)}
 .mop-em{font-size:22px;width:28px;text-align:center}
@@ -296,7 +307,9 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <div class="page" id="page-manual">
       <div class="sec-title">Nueva Orden</div>
       <div class="mo-table-grid" id="moTableGrid"></div>
-      <input class="mo-search" id="moSearch" placeholder="🔍 Buscar producto..." oninput="filterProducts()">
+      <div class="mo-tinfo" id="moTableInfo" style="display:none"></div>
+      <div class="mo-cats" id="moCats"></div>
+      <input class="mo-search" id="moSearch" placeholder="🔍 Buscar producto..." oninput="filterProducts(true)">
       <div class="mo-prod-list" id="moProdList"></div>
       <div class="mo-cart" id="moCartSection" style="display:none">
         <div class="mo-cart-title">Productos seleccionados</div>
@@ -304,7 +317,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
         <div class="mo-total"><span class="mo-total-l">Total</span><span class="mo-total-v" id="moTotal">$0</span></div>
       </div>
       <textarea class="mo-notes" id="moManualNotes" rows="2" placeholder="Notas especiales..."></textarea>
-      <button class="mo-submit" id="moSubmit" disabled onclick="submitManualOrder()">CREAR ORDEN</button>
+      <div class="mo-submit-bar"><button class="mo-submit" id="moSubmit" disabled onclick="submitManualOrder()">CREAR ORDEN</button></div>
     </div>
     <!-- ANALYTICS -->
     <div class="page" id="page-analytics">
@@ -647,6 +660,8 @@ function subscribeOrders(){
 }
 
 function updateCounts(){
+  // Mantener al día la cuenta abierta mostrada en la pantalla de captura
+  if(document.getElementById('page-manual')?.classList.contains('on')){ updateMoTableInfo(); checkMoSubmit(); }
   ['nuevo','preparando','listo'].forEach(s=>{
     const n=orders.filter(o=>o.status===s).length;
     document.getElementById('cnt-'+s).textContent=n;
@@ -801,6 +816,15 @@ const BC_OPTS={
   mixer:[['coca','🥤 Coca-Cola'],['manzanita','🍏 Manzanita'],['agua_mineral','💧 Agua Mineral']]
 };
 let bcState=null;
+const BC_LAST_KEY='bc_last_v1';
+function bcLoadLast(pid){ try{ return (JSON.parse(localStorage.getItem(BC_LAST_KEY)||'{}'))[pid]||null; }catch(e){ return null; } }
+function bcSaveLast(pid,s){
+  try{
+    const all=JSON.parse(localStorage.getItem(BC_LAST_KEY)||'{}');
+    all[pid]={beer:s.beer,esc:s.esc,polvo:s.polvo,clamato:s.clamato,limon:s.limon,salsa:s.salsa,mixer:s.mixer};
+    localStorage.setItem(BC_LAST_KEY,JSON.stringify(all));
+  }catch(e){}
+}
 function bcNeedsBeer(p){
   const n=p.name.toLowerCase();
   return p.category==='micheladas'&&!n.includes('modelo')&&!n.includes('negra')&&!n.includes('cero')&&!n.includes('high life')&&!n.includes('pacífico');
@@ -812,6 +836,11 @@ function openBarCfg(product, onConfirm){
   bcState={product, onConfirm, qty:1,
     beer:null, esc:null, polvo:'sin_polvo', clamato:'sin_clamato', limon:'sal_limon', salsa:null, mixer:null,
     needsBeer:!isBoneless&&!isCuba&&bcNeedsBeer(product), hasClamato, isBoneless, isCuba};
+  // Precargar la última configuración usada con este producto → repetir = 1 toque en "Agregar"
+  const last=bcLoadLast(product.id);
+  if(last) ['beer','esc','polvo','clamato','limon','salsa','mixer'].forEach(k=>{
+    if(last[k] && BC_OPTS[k].some(o=>o[0]===last[k])) bcState[k]=last[k];
+  });
   document.getElementById('bcClamatoSec').style.display=hasClamato?'block':'none';
   document.getElementById('bcEscSec').style.display=(isBoneless||isCuba)?'none':'block';
   document.getElementById('bcLimonSec').style.display=(isBoneless||isCuba)?'none':'block';
@@ -871,6 +900,7 @@ function confirmBarCfg(){
     if(bcState.needsBeer) cfg.beer_choice=bcState.beer;
   }
   const cb=bcState.onConfirm, p=bcState.product;
+  bcSaveLast(p.id,bcState);
   closeBarCfg();
   cb(p, cfg);
 }
@@ -1030,28 +1060,100 @@ function selMoTable(btn,id,label){
   document.querySelectorAll('.mt-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   moSelTable={id,label};
+  updateMoTableInfo();
   checkMoSubmit();
 }
-function filterProducts(){
-  const q=document.getElementById('moSearch').value.toLowerCase();
+// Cuenta abierta de la mesa seleccionada (total actual + repetir última ronda)
+function updateMoTableInfo(){
+  const el=document.getElementById('moTableInfo');
+  if(!el) return;
+  if(!moSelTable){ el.style.display='none'; return; }
+  const ord=moSelTable.id?findActiveOrderForTable(moSelTable.id):null;
+  el.style.display='flex';
+  if(!moSelTable.id){ el.innerHTML='<span>🚶 Cliente de pie: se crea un <b>pase nuevo</b></span>'; return; }
+  if(!ord){ el.innerHTML=`<span>${esc(moSelTable.label)}: <b>cuenta nueva</b></span>`; return; }
+  const n=(ord.order_items||[]).reduce((s,i)=>s+Number(i.quantity||0),0);
+  el.innerHTML=`<span>🧾 ${esc(moSelTable.label)}: cuenta <b>#${ord.order_number}</b> abierta · ${n} prod. · <b>$${Number(ord.total).toFixed(0)}</b></span>`
+    +(n?`<button onclick="repeatLastRound()">↻ Repetir última ronda</button>`:'');
+}
+// Copia al carrito los items de la última ronda de la cuenta abierta (misma configuración)
+function repeatLastRound(){
+  const ord=moSelTable&&moSelTable.id?findActiveOrderForTable(moSelTable.id):null;
+  const its=(ord&&ord.order_items)||[];
+  if(!its.length) return;
+  const last=its.reduce((m,i)=>i.created_at>m?i.created_at:m,'');
+  let added=0;
+  its.filter(i=>i.created_at===last).forEach(i=>{
+    const p=products.find(x=>x.id===i.product_id);
+    if(!p) return;
+    const qty=Number(i.quantity)||1;
+    if(isMoConfigurable(p)){
+      mergeMoCfgLine(p,{escarchado:i.escarchado_choice,polvo:i.polvo_choice,limon:i.limon_choice,clamato:i.clamato_choice,beer_choice:i.beer_choice,salsa:i.salsa_choice,mixer:i.mixer_choice,quantity:qty});
+    } else {
+      if(!moCart[p.id]) moCart[p.id]={key:p.id,product:p,qty:0};
+      moCart[p.id].qty+=qty;
+    }
+    added++;
+  });
+  renderMoCart(); checkMoSubmit();
+  showToast(added?'↻ Última ronda copiada al carrito':'No se pudo copiar (productos no disponibles)');
+}
+// ----- Categorías -----
+const MO_CATS=[['micheladas','🦐 Micheladas'],['cervezas','🍺 Cervezas'],['cerveza_sola','🍻 Sola'],['new_mix','🥤 New Mix'],['cocktails','🍹 Cócteles'],['cubas','🥃 Cubas'],['snacks','🍟 Snacks'],['especiales','🥤 Refrescos'],['cigarros','🚬 Cigarros']];
+let moCat=null;
+function renderMoCats(){
+  const el=document.getElementById('moCats');
+  if(!el) return;
+  const present=MO_CATS.filter(([k])=>products.some(p=>p.category===k));
+  if(!moCat||!present.some(([k])=>k===moCat)) moCat=present.length?present[0][0]:'all';
+  el.innerHTML=present.map(([k,l])=>`<button class="mo-cat${k===moCat?' on':''}" onclick="setMoCat('${k}')">${l}</button>`).join('');
+}
+function setMoCat(k){
+  moCat=k;
+  document.getElementById('moSearch').value='';
+  renderMoCats();
+  filterProducts(true);
+}
+function moProdQty(pid){ return Object.values(moCart).filter(c=>c.product.id===pid).reduce((s,c)=>s+c.qty,0); }
+function filterProducts(resetScroll){
+  const q=document.getElementById('moSearch').value.toLowerCase().trim();
   const list=document.getElementById('moProdList');
-  const filtered=products.filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));
-  list.innerHTML=filtered.map(p=>`
+  const prevScroll=list.scrollTop;
+  // Con búsqueda se busca en TODO el menú; sin búsqueda, solo la categoría elegida
+  const filtered=products.filter(p=>q?(p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)):(!moCat||moCat==='all'||p.category===moCat));
+  list.innerHTML=filtered.map(p=>{
+    const n=moProdQty(p.id);
+    return `
     <div class="mop" onclick="addToMoCart('${p.id}')">
       <span class="mop-em">${p.emoji||'🍺'}</span>
-      <div class="mop-info"><div class="mop-name">${p.name}</div><div class="mop-price">$${Number(p.price).toFixed(0)}</div></div>
-      <div class="mop-add">+</div>
-    </div>`).join('');
+      <div class="mop-info"><div class="mop-name">${esc(p.name)}</div><div class="mop-price">$${Number(p.price).toFixed(0)}</div></div>
+      <div class="mop-add${n?' has':''}">${n?'×'+n:'+'}</div>
+    </div>`;}).join('');
+  list.scrollTop=resetScroll===true?0:prevScroll;
 }
-function renderManualProds(){ filterProducts(); }
+function renderManualProds(){ renderMoCats(); filterProducts(true); }
 let moLineSeq=0;
+function isMoConfigurable(p){ return p.has_escarchado || p.name.toLowerCase().includes('boneless') || p.category==='cubas'; }
+// Agrega una línea configurada; si ya hay una idéntica (mismo producto y misma config) suma cantidad
+function mergeMoCfgLine(prod,cfg){
+  const sig=o=>JSON.stringify([o.escarchado||null,o.polvo||null,o.limon||null,o.clamato||null,o.beer_choice||null,o.salsa||null,o.mixer||null]);
+  const same=Object.values(moCart).find(c=>c.cfg&&c.product.id===prod.id&&sig(c.cfg)===sig(cfg));
+  if(same){ same.qty+=cfg.quantity||1; return; }
+  const key='cfg'+(++moLineSeq);
+  moCart[key]={key, product:prod, qty:cfg.quantity||1, cfg};
+}
+function moQty(key,d){
+  const c=moCart[key]; if(!c) return;
+  c.qty+=d;
+  if(c.qty<=0) delete moCart[key];
+  renderMoCart(); checkMoSubmit();
+}
 function addToMoCart(pid){
   const p=products.find(x=>x.id===pid);
   if(!p) return;
-  if(p.has_escarchado || p.name.toLowerCase().includes('boneless') || p.category==='cubas'){
+  if(isMoConfigurable(p)){
     openBarCfg(p, (prod,cfg)=>{
-      const key='cfg'+(++moLineSeq);
-      moCart[key]={key, product:prod, qty:cfg.quantity||1, cfg};
+      mergeMoCfgLine(prod,cfg);
       renderMoCart(); checkMoSubmit();
     });
     return;
@@ -1082,13 +1184,22 @@ function renderMoCart(){
   const items=Object.values(moCart);
   const sec=document.getElementById('moCartSection');
   const el=document.getElementById('moCartItems');
+  filterProducts(); // refresca las insignias ×N de la lista (conserva el scroll)
   if(!items.length){sec.style.display='none';return}
   sec.style.display='block';
   const total=items.reduce((s,c)=>s+(Number(c.product.price)+moLineExtra(c))*c.qty,0);
-  el.innerHTML=items.map(c=>`<div class="mo-ci"><div class="mo-ci-l">${c.qty}x ${c.product.name}${moCfgTags(c.cfg)}</div><div class="mo-ci-r"><span class="mo-ci-price">$${((Number(c.product.price)+moLineExtra(c))*c.qty).toFixed(0)}</span><button class="mo-ci-del" onclick="removeMoCart('${c.key}')">✕</button></div></div>`).join('');
+  el.innerHTML=items.map(c=>`<div class="mo-ci"><div class="mo-ci-l">${esc(c.product.name)}${moCfgTags(c.cfg)}</div><div class="mo-ci-r"><div class="mo-ci-q"><button onclick="moQty('${c.key}',-1)">−</button><span>${c.qty}</span><button onclick="moQty('${c.key}',1)">+</button></div><span class="mo-ci-price">$${((Number(c.product.price)+moLineExtra(c))*c.qty).toFixed(0)}</span><button class="mo-ci-del" onclick="removeMoCart('${c.key}')">✕</button></div></div>`).join('');
   document.getElementById('moTotal').textContent='$'+total.toFixed(0);
 }
-function checkMoSubmit(){ document.getElementById('moSubmit').disabled=!moSelTable||!Object.keys(moCart).length; }
+function moCartTotal(){ return Object.values(moCart).reduce((s,c)=>s+(Number(c.product.price)+moLineExtra(c))*c.qty,0); }
+// Botón fijo abajo: siempre muestra qué hará y cuánto suma
+function checkMoSubmit(){
+  const btn=document.getElementById('moSubmit');
+  const n=Object.keys(moCart).length;
+  btn.disabled=!moSelTable||!n;
+  const ord=moSelTable&&moSelTable.id?findActiveOrderForTable(moSelTable.id):null;
+  btn.textContent=(ord?'AGREGAR A CUENTA':'CREAR ORDEN')+(n?' · $'+moCartTotal().toFixed(0):'');
+}
 function findActiveOrderForTable(tableId){
   // Busca si la mesa ya tiene una cuenta abierta (sin pagar, no cancelada/entregada)
   return orders.find(o=>o.table_id===tableId && o.payment_status==='pendiente' && !['cancelado','entregado'].includes(o.status));
@@ -1134,11 +1245,11 @@ async function submitManualOrder(){
     moCart={}; moSelTable=null;
     document.querySelectorAll('.mt-btn').forEach(b=>b.classList.remove('sel'));
     document.getElementById('moManualNotes').value='';
-    renderMoCart(); checkMoSubmit(); filterProducts();
+    renderMoCart(); updateMoTableInfo(); checkMoSubmit();
     await loadOrders(); renderOrdersList(); updateCounts();
     showToast(result.added ? '✅ Agregado a la orden #'+result.order_number : '✅ Orden #'+result.order_number+' creada');
   } catch(e){ console.error(e); alert('Error: '+(e.message||'no se pudo procesar')); }
-  btn.disabled=false; btn.textContent='CREAR ORDEN';
+  checkMoSubmit();
 }
 
 // ===== ANALYTICS =====
