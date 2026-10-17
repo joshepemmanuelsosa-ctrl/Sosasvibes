@@ -28,7 +28,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .lp-crown{font-size:40px;margin-bottom:12px}
 .lp-logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:var(--red);text-shadow:0 0 20px rgba(232,84,63,.4)}
 .lp-sub{font-size:13px;color:var(--muted);margin-bottom:28px;margin-top:4px}
-.lp-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;text-align:left}
+.lp-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;text-align:left}
 .lp-inp{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:var(--white);font:400 15px 'Inter',sans-serif;padding:14px 16px;outline:none;margin-bottom:14px;transition:border-color .2s}
 .lp-inp:focus{border-color:var(--beer)}
 .lp-btn{width:100%;padding:15px;background:var(--beer);border:none;border-radius:12px;color:#0A0A00;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;cursor:pointer}
@@ -40,28 +40,28 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .app-bar{background:var(--e);border-bottom:1px solid rgba(255,255,255,.06);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .ab-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--beer)}
 .ab-right{display:flex;align-items:center;gap:8px}
-.ab-user{font-size:11px;color:var(--muted)}
-.ab-out{background:rgba(255,194,51,.1);border:1px solid rgba(255,194,51,.3);color:var(--beer);font:600 11px 'Inter',sans-serif;padding:5px 10px;border-radius:8px;cursor:pointer}
+.ab-user{font-size:12px;color:var(--muted)}
+.ab-out{background:rgba(255,194,51,.1);border:1px solid rgba(255,194,51,.3);color:var(--beer);font:600 12px 'Inter',sans-serif;padding:5px 10px;border-radius:8px;cursor:pointer}
 .main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .page{display:none;padding:16px 16px 8px}
 .page.on{display:block}
 .bnav{background:var(--e);border-top:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(7,1fr);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
-.nb{background:none;border:none;color:var(--muted);font:600 8px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;min-height:52px;justify-content:center;transition:color .2s}
+.nb{background:none;border:none;color:var(--muted);font:600 11px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;min-height:52px;justify-content:center;transition:color .2s}
 .nb span{font-size:18px}
 .nb.on{color:var(--beer)}
 
 /* CARDS */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .kpi{background:var(--e);border-radius:var(--r);padding:14px;border:1px solid rgba(255,255,255,.06)}
-.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.kpi-lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
 .kpi-val{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px}
 .kpi-val.lime{color:var(--lime)} .kpi-val.red{color:var(--red)} .kpi-val.beer{color:var(--beer)} .kpi-val.white{color:var(--white)} .kpi-val.green{color:var(--green)}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.kpi-sub{font-size:11.5px;color:var(--muted);margin-top:3px}
 .sec-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--red);margin:16px 0 10px}
 
 /* FILTER PILLS */
 .filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.fp{padding:7px 14px;border-radius:var(--pill);border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);font:600 11px 'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.fp{padding:7px 14px;border-radius:var(--pill);border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);font:600 12px 'Inter',sans-serif;cursor:pointer;transition:all .2s}
 .fp.on{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
 
 /* BAR CHARTS */
@@ -78,7 +78,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .hour-wrap{display:flex;align-items:flex-end;gap:3px;height:70px;margin:8px 0 4px}
 .hcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
 .hbar{width:100%;background:rgba(255,194,51,.3);border-radius:3px 3px 0 0;min-height:2px;transition:height .5s var(--soft)}
-.hlbl{font-size:7px;color:var(--muted)}
+.hlbl{font-size:11px;color:var(--muted)}
 
 /* INVENTARIO */
 .inv-card{background:var(--e);border-radius:var(--r);padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:10px;border-left:3px solid var(--lime)}
@@ -86,13 +86,13 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .inv-card.crit{border-left-color:var(--red)}
 .inv-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
 .inv-name{font-size:14px;font-weight:700;color:var(--white)}
-.inv-cat{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-.inv-badge{padding:3px 8px;border-radius:var(--pill);font-size:9px;font-weight:800}
+.inv-cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.inv-badge{padding:3px 8px;border-radius:var(--pill);font-size:11px;font-weight:800}
 .inv-badge.ok{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
 .inv-badge.warn{background:rgba(255,194,51,.15);color:var(--beer);border:1px solid rgba(255,194,51,.3)}
 .inv-badge.crit{background:rgba(232,84,63,.15);color:var(--red);border:1px solid rgba(232,84,63,.3)}
 .inv-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.inv-field label{font-size:9px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px}
+.inv-field label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px}
 .inv-field input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font:600 14px 'Inter',sans-serif;padding:7px 10px;outline:none;text-align:center}
 .inv-field input:focus{border-color:var(--lime)}
 .inv-save{margin-top:10px;width:100%;padding:9px;border:none;border-radius:10px;background:rgba(217,164,65,.12);color:var(--lime);font:700 12px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(217,164,65,.3);transition:background .2s}
@@ -107,7 +107,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .buy-rec.ok{color:var(--green)} .buy-rec.buy{color:var(--beer)}
 .buy-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
 .buy-stat{background:rgba(255,255,255,.04);border-radius:8px;padding:6px;text-align:center}
-.buy-stat-lbl{font-size:9px;color:var(--muted);display:block}
+.buy-stat-lbl{font-size:11px;color:var(--muted);display:block}
 .buy-stat-val{font-size:13px;font-weight:700;color:var(--white)}
 
 /* MESAS */
@@ -115,11 +115,11 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .mesa-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .mesa-name{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white)}
 .mesa-total{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime)}
-.mesa-status{padding:3px 10px;border-radius:var(--pill);font-size:10px;font-weight:800}
+.mesa-status{padding:3px 10px;border-radius:var(--pill);font-size:11.5px;font-weight:800}
 .mesa-status.nuevo{background:rgba(232,84,63,.15);color:var(--red)}
 .mesa-status.preparando{background:rgba(255,194,51,.15);color:var(--beer)}
 .mesa-status.listo{background:rgba(217,164,65,.15);color:var(--lime)}
-.mesa-items{font-size:11px;color:var(--muted);line-height:1.7}
+.mesa-items{font-size:12px;color:var(--muted);line-height:1.7}
 /* Admin de mesas */
 .tbl-admin{background:var(--e);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06);margin-bottom:18px}
 .tbl-admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -130,34 +130,34 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .tbl-minus{background:rgba(232,84,63,.12);color:var(--red);border:1.5px solid rgba(232,84,63,.3)}
 .tbl-plus{background:rgba(217,164,65,.12);color:var(--lime);border:1.5px solid rgba(217,164,65,.3)}
 .tbl-count{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--white);min-width:60px;text-align:center;line-height:1}
-.tbl-count-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;text-align:center;margin-top:2px}
+.tbl-count-lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;text-align:center;margin-top:2px}
 .tbl-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;justify-content:center}
-.tbl-chip{font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
+.tbl-chip{font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
 .tbl-chip.barra{background:rgba(255,194,51,.12);color:var(--beer);border-color:rgba(255,194,51,.3)}
 /* Finanzas */
 .fin-hero{background:linear-gradient(145deg,rgba(217,164,65,.08),rgba(217,164,65,.02));border:1px solid rgba(217,164,65,.25);border-radius:18px;padding:18px;margin-bottom:14px;text-align:center}
-.fin-hero-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+.fin-hero-lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
 .fin-hero-val{font-family:'Bebas Neue',sans-serif;font-size:42px;margin-top:4px}
 .fin-hero-val.pos{color:var(--lime)} .fin-hero-val.neg{color:var(--red)}
 .fin-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
 .fin-card{background:var(--e);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.06)}
-.fin-card-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.fin-card-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
 .fin-card-val{font-family:'Bebas Neue',sans-serif;font-size:20px;margin-top:3px}
 .fin-card-val.rev{color:var(--white)} .fin-card-val.cost{color:var(--beer)} .fin-card-val.exp{color:#FF8B6B} .fin-card-val.merma{color:var(--red)}
 .fin-tabs{display:flex;gap:6px;margin-bottom:14px}
-.fin-tab{flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);font:700 11px 'Inter',sans-serif;cursor:pointer}
+.fin-tab{flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);font:700 12px 'Inter',sans-serif;cursor:pointer}
 .fin-tab.on{background:var(--lime);color:#0A0A00;border-color:var(--lime)}
 .fin-sub{display:none}
 .fin-sub.on{display:block}
 .fin-form{background:var(--e);border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:16px}
 .fin-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.fin-form label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px}
+.fin-form label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px}
 .fin-form select,.fin-form input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 13px 'Inter',sans-serif;padding:9px 10px;outline:none}
 .fin-form-full{grid-column:1/-1}
 .fin-submit{width:100%;padding:12px;border:none;border-radius:10px;background:var(--lime);color:#0A0A00;font:800 13px 'Inter',sans-serif;cursor:pointer;margin-top:4px}
 .fin-list-item{background:var(--e);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .fin-li-name{font-size:13px;font-weight:700;color:var(--white)}
-.fin-li-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.fin-li-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
 .fin-li-amt{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--red)}
 .margin-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
 .margin-name{font-size:12px;color:var(--white);flex:1}
@@ -168,19 +168,19 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 /* Cigarros */
 .cig-form{background:var(--e);border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:16px}
 .cig-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.cig-form label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px}
+.cig-form label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px}
 .cig-form input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 13px 'Inter',sans-serif;padding:9px 10px;outline:none}
 .cig-form-full{grid-column:1/-1}
 .cig-submit{width:100%;padding:12px;border:none;border-radius:10px;background:var(--lime);color:#0A0A00;font:800 13px 'Inter',sans-serif;cursor:pointer;margin-top:4px}
 .cig-card{background:var(--e);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .cig-info{flex:1;min-width:0}
 .cig-name{font-size:13px;font-weight:700;color:var(--white)}
-.cig-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.cig-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
 .cig-stock{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--lime)}
 .cig-stock.low{color:var(--beer)} .cig-stock.zero{color:var(--red)}
 .cig-restock{width:46px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--white);font:600 12px 'Inter',sans-serif;padding:6px;outline:none;text-align:center}
-.cig-restock-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(217,164,65,.15);color:var(--lime);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(217,164,65,.3)}
-.cig-deduct-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(232,84,63,.12);color:var(--red);font:700 11px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(232,84,63,.3)}
+.cig-restock-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(217,164,65,.15);color:var(--lime);font:700 12px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(217,164,65,.3)}
+.cig-deduct-btn{padding:6px 10px;border:none;border-radius:8px;background:rgba(232,84,63,.12);color:var(--red);font:700 12px 'Inter',sans-serif;cursor:pointer;border:1px solid rgba(232,84,63,.3)}
 .cig-actions-row{display:flex;gap:6px;margin-top:8px;align-items:center;width:100%}
 /* Conteo de cierre */
 .count-cta{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#1a1a1a,#0d0d0d);border:1.5px solid rgba(91,168,255,.4);color:#5BA8FF;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:14px}
@@ -197,15 +197,15 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .cr-total{margin-top:10px;padding:10px;border-radius:10px;text-align:center;font-weight:800;font-size:14px}
 .cr-total.bad{background:rgba(232,84,63,.1);color:var(--red);border:1px solid rgba(232,84,63,.3)}
 .cr-total.ok{background:rgba(217,164,65,.08);color:var(--lime);border:1px solid rgba(217,164,65,.25)}
-.count-hist{font-size:11px;color:var(--muted);padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between}
+.count-hist{font-size:12px;color:var(--muted);padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between}
 .count-hist .miss{color:var(--red);font-weight:700}
 /* Promos */
 .promo-form{background:var(--e);border-radius:14px;padding:14px;border:1px solid rgba(255,140,0,.25);margin-bottom:14px}
-.promo-form label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin:8px 0 4px}
+.promo-form label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin:8px 0 4px}
 .promo-form input,.promo-form select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 13px 'Inter',sans-serif;padding:9px 10px;outline:none}
 .promo-form select option{background:#111}
 .day-chips{display:flex;gap:5px;flex-wrap:wrap}
-.day-chip{flex:1;min-width:36px;padding:8px 0;text-align:center;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--muted);font:700 11px 'Inter',sans-serif;cursor:pointer}
+.day-chip{flex:1;min-width:36px;padding:8px 0;text-align:center;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--muted);font:700 12px 'Inter',sans-serif;cursor:pointer}
 .day-chip.on{background:rgba(255,140,0,.2);color:#FF9D33;border-color:rgba(255,140,0,.5)}
 .combo-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
 .combo-row select{flex:1}
@@ -216,16 +216,16 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .promo-card.live{border-color:rgba(255,140,0,.45)}
 .promo-info{flex:1;min-width:0}
 .promo-name{font-size:13px;font-weight:700;color:var(--white)}
-.promo-meta{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
-.promo-live{font-size:9px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.14);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px}
-.promo-del{background:rgba(232,84,63,.12);color:var(--red);border:1px solid rgba(232,84,63,.3);border-radius:8px;font-size:11px;font-weight:800;padding:6px 10px;cursor:pointer}
-.inv-countable{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-top:6px}
+.promo-meta{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+.promo-live{font-size:11px;font-weight:800;color:#FF9D33;background:rgba(255,140,0,.14);border:1px solid rgba(255,140,0,.35);border-radius:20px;padding:2px 8px}
+.promo-del{background:rgba(232,84,63,.12);color:var(--red);border:1px solid rgba(232,84,63,.3);border-radius:8px;font-size:12px;font-weight:800;padding:6px 10px;cursor:pointer}
+.inv-countable{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-top:6px}
 
 /* PRODUCTOS TOGGLE */
 .prod-card{background:var(--e);border-radius:var(--r);padding:12px 14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;display:flex;align-items:center;gap:12px}
 .prod-info{flex:1}
 .prod-name{font-size:13px;font-weight:600;color:var(--white)}
-.prod-cat{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.prod-cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .prod-price{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--lime)}
 .toggle{position:relative;width:46px;height:26px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0;position:absolute}
@@ -238,7 +238,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
 .pay-card{background:var(--e);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,.06)}
 .pay-icon{font-size:20px;margin-bottom:4px}
-.pay-method{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.pay-method{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
 .pay-amount{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white);margin-top:4px}
 
 /* TOAST */
@@ -248,6 +248,18 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 .spin{display:inline-block;width:20px;height:20px;border:2px solid rgba(217,164,65,.2);border-top-color:var(--lime);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-center{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+/* ===== Pulido UI/UX compartido ===== */
+:root{color-scheme:dark}
+html{-webkit-text-size-adjust:100%}
+button,.tab,.mop,.mt-btn,[onclick]{touch-action:manipulation;-webkit-tap-highlight-color:rgba(217,164,65,.18)}
+:focus-visible{outline:2px solid #D9A441;outline-offset:2px;border-radius:6px}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:0}
+button{min-height:36px}
+.bc-opt,.mo-cat,.mt-btn,.esc-btn,.pm-btn,.fp,.af-btn{min-height:44px}
+.mo-ci-del,.mop-add,.mo-ci-q button,.bc-qbtn,.cs-close{min-width:40px;min-height:40px}
+.mo-ci-q button{width:40px;height:40px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -289,13 +301,13 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       <div class="sec-title">🕐 Ventas por hora</div>
       <div class="hour-wrap" id="hourChart"></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-        <span style="font-size:9px;color:var(--muted)">12h</span>
-        <span style="font-size:9px;color:var(--muted)">23h</span>
+        <span style="font-size:11px;color:var(--muted)">12h</span>
+        <span style="font-size:11px;color:var(--muted)">23h</span>
       </div>
       <div class="sec-title">📊 Top productos</div>
       <div class="bar-list" id="topProds"></div>
       <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(232,84,63,.15)">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center">⚠️ Zona de administración — elimina TODOS los pedidos</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;text-align:center">⚠️ Zona de administración — elimina TODOS los pedidos</div>
         <button onclick="resetAllOrders()" style="width:100%;padding:14px;background:rgba(232,84,63,.08);border:1.5px solid rgba(232,84,63,.35);border-radius:12px;color:var(--red);font:700 13px 'Inter',sans-serif;cursor:pointer;letter-spacing:.5px;margin-bottom:80px">🗑️ REINICIAR TODOS LOS PEDIDOS</button>
       </div>
     </div>
@@ -307,7 +319,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       </div>
       <button class="count-cta" onclick="startCount()">📋 CONTEO DE CIERRE</button>
       <div class="count-panel" id="countPanel">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Cuenta lo que hay FÍSICAMENTE. No se muestra lo que "debería" haber para que el conteo sea honesto.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Cuenta lo que hay FÍSICAMENTE. No se muestra lo que "debería" haber para que el conteo sea honesto.</div>
         <div id="countRows"></div>
         <input type="text" id="countBy" placeholder="¿Quién contó? (opcional)" style="width:100%;margin-top:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--white);font:600 12px 'Inter',sans-serif;padding:9px 11px;outline:none">
         <button class="count-save" id="countSaveBtn" onclick="saveCount()">✅ Comparar y guardar</button>
@@ -333,7 +345,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <!-- COMPRAS -->
     <div class="page" id="page-buy">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red);margin-bottom:4px">RECOMENDADOR DE COMPRAS</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Basado en ventas de los últimos 7 días · Stock para 1 semana</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Basado en ventas de los últimos 7 días · Stock para 1 semana</div>
       <div id="buyList"><div class="loading-center"><div class="spin"></div></div></div>
     </div>
     <!-- MESAS -->
@@ -358,7 +370,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <!-- PRODUCTOS -->
     <div class="page" id="page-prods">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#FF8C00;margin-bottom:4px">🔥 PROMOCIONES</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Se activan y desactivan solas según día y horario. El descuento lo aplica el servidor — nadie lo puede manipular.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Se activan y desactivan solas según día y horario. El descuento lo aplica el servidor — nadie lo puede manipular.</div>
       <div class="promo-form">
         <label>Nombre de la promo</label>
         <input type="text" id="prName" placeholder="Ej. Happy Hour Micheladas">
@@ -396,7 +408,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       <div id="promoList"></div>
 
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red);margin:24px 0 4px">🚬 CIGARROS</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Carga manualmente cada tipo — se conecta solo al inventario y se descuenta automático conforme se venden</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Carga manualmente cada tipo — se conecta solo al inventario y se descuenta automático conforme se venden</div>
       <div class="cig-form">
         <div class="cig-form-row">
           <div class="cig-form-full"><label>Tipo / Marca</label><input type="text" id="cigName" placeholder="Ej. Marlboro Rojo"></div>
@@ -413,7 +425,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
       <div id="cigList"><div class="loading-center"><div class="spin"></div></div></div>
 
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red);margin:24px 0 4px">GESTIÓN DE PRODUCTOS</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Activa o desactiva productos — el cambio se refleja inmediatamente en el menú</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Activa o desactiva productos — el cambio se refleja inmediatamente en el menú</div>
       <div id="prodList"><div class="loading-center"><div class="spin"></div></div></div>
     </div>
     <!-- FINANZAS -->
@@ -436,7 +448,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
         <div class="fin-card"><div class="fin-card-lbl">Gastos</div><div class="fin-card-val exp" id="finExpenses">$0</div></div>
         <div class="fin-card"><div class="fin-card-lbl">Mermas</div><div class="fin-card-val merma" id="finMermas">$0</div></div>
       </div>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin:-8px 0 16px">
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin:-8px 0 16px">
         Utilidad bruta: <strong id="finGross" style="color:var(--lime)">$0</strong> · Margen bruto: <strong id="finMarginPct" style="color:var(--lime)">0%</strong>
       </div>
 
@@ -448,7 +460,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
 
       <!-- Márgenes por producto -->
       <div class="fin-sub on" id="finsub-margenes">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Qué tanto deja cada producto, de mayor a menor margen</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Qué tanto deja cada producto, de mayor a menor margen</div>
         <div id="marginList"><div class="loading-center"><div class="spin"></div></div></div>
       </div>
 
@@ -516,7 +528,7 @@ html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter
     <div style="font-size:12px;color:var(--muted);line-height:1.6;margin:12px 0 18px">
       Esto reiniciará <strong style="color:#fff">absolutamente todo</strong>: ventas, pedidos, pases e inventario quedarán en cero. Esta acción <strong style="color:var(--red)">no se puede deshacer</strong>.
     </div>
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;text-align:left">Escribe <strong style="color:#fff">REINICIAR</strong> para confirmar</div>
+    <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;text-align:left">Escribe <strong style="color:#fff">REINICIAR</strong> para confirmar</div>
     <input id="modoCeroInput" type="text" autocomplete="off" placeholder="REINICIAR"
       style="width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.15);border-radius:12px;color:#fff;font:700 16px 'Inter',sans-serif;padding:13px 16px;outline:none;text-align:center;letter-spacing:2px;margin-bottom:16px">
     <div style="display:flex;gap:10px">
@@ -825,7 +837,7 @@ async function loadBuying(){
         <div class="buy-name">${r.name}</div>
         <div>
           <div class="buy-rec ${r.toPurchase>0?'buy':'ok'}">${r.toPurchase>0?`Comprar ${r.toPurchase} ${r.unit}`:'✅ OK'}</div>
-          ${r.toPurchase>0&&r.cost>0?`<div style="font-size:10px;color:var(--muted);text-align:right">~$${r.estCost.toFixed(0)}</div>`:''}
+          ${r.toPurchase>0&&r.cost>0?`<div style="font-size:11.5px;color:var(--muted);text-align:right">~$${r.estCost.toFixed(0)}</div>`:''}
         </div>
       </div>
       <div class="buy-stats">
@@ -848,7 +860,7 @@ async function loadMesas(){
     const mins=Math.floor((Date.now()-new Date(o.created_at))/60000);
     return `<div class="mesa-card">
       <div class="mesa-head">
-        <div><div class="mesa-name">#${o.order_number} · ${esc(o.table_label)}</div><div style="font-size:10px;color:var(--muted)">⏱ ${mins<60?mins+'min':Math.floor(mins/60)+'h'}</div></div>
+        <div><div class="mesa-name">#${o.order_number} · ${esc(o.table_label)}</div><div style="font-size:11.5px;color:var(--muted)">⏱ ${mins<60?mins+'min':Math.floor(mins/60)+'h'}</div></div>
         <div style="text-align:right"><div class="mesa-total">$${Number(o.total).toFixed(0)}</div><span class="mesa-status ${o.status}">${esc(o.status)}</span></div>
       </div>
       <div class="mesa-items">${itemsSummary}</div>
@@ -954,7 +966,7 @@ async function loadMargins(){
       const pct=Number(r.margin_pct);
       const cls=pct>=60?'good':pct>=35?'mid':'bad';
       return `<div class="margin-row">
-        <div class="margin-name">${esc(r.product_name)}<div style="font-size:10px;color:var(--muted)">${r.units_sold} vendidos · $${Number(r.margin).toFixed(0)} ganancia</div></div>
+        <div class="margin-name">${esc(r.product_name)}<div style="font-size:11.5px;color:var(--muted)">${r.units_sold} vendidos · $${Number(r.margin).toFixed(0)} ganancia</div></div>
         <span class="margin-pct ${cls}">${pct.toFixed(0)}%</span>
       </div>`;
     }).join('');
@@ -1090,14 +1102,14 @@ function renderCountResult(data){
   document.getElementById('countResult').innerHTML=`<div class="count-result">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--white);letter-spacing:1px;margin-bottom:8px">RESULTADO DEL CONTEO</div>
     ${rows}${totalHTML}
-    <div style="font-size:10px;color:var(--muted);margin-top:8px">El stock del sistema se ajustó a lo contado físicamente.</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:8px">El stock del sistema se ajustó a lo contado físicamente.</div>
   </div>`;
 }
 async function loadCountHistory(){
   const {data}=await sb.from('stock_counts').select('created_at,counted_by,total_missing_cost').order('created_at',{ascending:false}).limit(7);
   const el=document.getElementById('countHistory');
   if(!data||!data.length){ el.innerHTML=''; return; }
-  el.innerHTML=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:4px 0 6px">Últimos conteos</div>`+
+  el.innerHTML=`<div style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:4px 0 6px">Últimos conteos</div>`+
     data.map(c=>{
       const d=new Date(c.created_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
       const miss=Number(c.total_missing_cost||0);
@@ -1302,7 +1314,7 @@ async function loadCigarros(){
     const stockCls=stock===0?'zero':stock<=5?'low':'';
     return `<div class="cig-card">
       <div class="cig-info">
-        <div class="cig-name">🚬 ${esc(p.name)} ${!p.available?'<span style="color:var(--red);font-size:10px">(oculto)</span>':''}</div>
+        <div class="cig-name">🚬 ${esc(p.name)} ${!p.available?'<span style="color:var(--red);font-size:11.5px">(oculto)</span>':''}</div>
         <div class="cig-meta">$${Number(p.price).toFixed(0)} c/u${ing?' · costo $'+Number(ing.cost_per_unit).toFixed(0):''}</div>
       </div>
       <div class="cig-stock ${stockCls}">${stock}</div>
@@ -1452,6 +1464,15 @@ async function resetAllOrders(){
     toast('❌ Error inesperado: '+(e.message||e));
   }
 }
+
+// Etiquetas accesibles para botones con solo símbolo (+, −, ✕, ×), incluidos los dinámicos
+(function(){
+  const L={'+':'Agregar','−':'Quitar','-':'Quitar','✕':'Eliminar','×':'Cerrar','✖':'Cerrar'};
+  const fix=r=>r.querySelectorAll&&r.querySelectorAll('button:not([aria-label])').forEach(b=>{const t=b.textContent.trim();if(L[t])b.setAttribute('aria-label',L[t]);});
+  const run=()=>fix(document);
+  if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+  new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>n.nodeType===1&&(n.tagName==='BUTTON'&&!n.hasAttribute('aria-label')&&L[n.textContent.trim()]?n.setAttribute('aria-label',L[n.textContent.trim()]):fix(n))))).observe(document.documentElement,{childList:true,subtree:true});
+})();
 </script>
 </body>
 </html>
