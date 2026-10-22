@@ -606,15 +606,24 @@ function businessDayStart(cutoffHour=CORTE_CUTOFF_HOUR){
 }
 
 // ===== AUTH =====
+function loginErrorText(error){
+  const c=error&&error.code, s=error&&error.status;
+  if(c==='invalid_credentials'||c==='user_not_found') return 'Correo o contraseña incorrectos';
+  if(c==='email_not_confirmed') return 'Tu correo aún no está confirmado';
+  if(s===429||c==='over_request_rate_limit') return 'Demasiados intentos — espera unos minutos';
+  if(!s||error.name==='AuthRetryableFetchError') return 'Sin conexión — revisa tu internet e intenta de nuevo';
+  return 'No se pudo iniciar sesión ('+(c||error.message)+')';
+}
 async function doLogin(){
   const email=document.getElementById('lpEmail').value.trim();
   const pass=document.getElementById('lpPass').value;
   const err=document.getElementById('lpErr');
   err.textContent='';
   if(!email||!pass){err.textContent='Completa todos los campos';return}
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){err.textContent='Credenciales incorrectas';return}
-  enterApp(data.user);
+  let res;
+  try{ res=await sb.auth.signInWithPassword({email,password:pass}); }catch(e){ res={error:e}; }
+  if(res.error){ console.error('login error:',res.error); err.textContent=loginErrorText(res.error); return; }
+  enterApp(res.data.user);
 }
 async function doLogout(){
   await sb.auth.signOut();
