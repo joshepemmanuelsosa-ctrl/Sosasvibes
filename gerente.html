@@ -639,13 +639,33 @@ async function initApp(){
   subscribeRealtime();
 }
 
+// Refresco del dashboard/mesas: una sola carga a la vez, agrupando ráfagas de eventos
+// realtime (una orden dispara varios UPDATE seguidos) y sin trabajar con la pestaña oculta.
+let _refreshTimer=null, _refreshBusy=false, _refreshDirty=false;
+function scheduleRefresh(delay=700){
+  clearTimeout(_refreshTimer);
+  _refreshTimer=setTimeout(runRefresh,delay);
+}
+async function runRefresh(){
+  if(document.hidden){ _refreshDirty=true; return; }
+  if(_refreshBusy){ _refreshDirty=true; return; }
+  _refreshBusy=true; _refreshDirty=false;
+  try{
+    await loadDashboard();
+    if(document.getElementById('page-mesas').classList.contains('on')) await loadMesas();
+  }catch(e){ console.error('runRefresh error:',e); }
+  finally{
+    _refreshBusy=false;
+    if(_refreshDirty && !document.hidden) scheduleRefresh(300);
+  }
+}
+// Al volver a la pestaña, ponerse al día si se acumuló algo mientras estaba oculta.
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && _refreshDirty) scheduleRefresh(100); });
+
 function subscribeRealtime(){
   // Suscripción a órdenes nuevas para actualizar mesas en tiempo real
   ordersSub=sb.channel('g-orders')
-    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
-      loadDashboard();
-      if(document.getElementById('page-mesas').classList.contains('on')) loadMesas();
-    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>scheduleRefresh())
     .on('postgres_changes',{event:'*',schema:'public',table:'ingredients'},()=>{
       if(document.getElementById('page-inv').classList.contains('on')) loadInventory();
     })
@@ -671,7 +691,8 @@ function setRange(btn){
 
 async function loadDashboard(){
   const since=rangeStart(curRange);
-  const {data:ords}=await sb.from('orders').select('*,order_items(*)').gte('created_at',since).neq('status','cancelado');
+  const {data:ords,error:dashErr}=await sb.from('orders').select('*,order_items(*)').gte('created_at',since).neq('status','cancelado');
+  if(dashErr){ console.error('loadDashboard error:',dashErr); toast('⚠️ No se pudo actualizar el dashboard'); return; }
   if(!ords)return;
   ordersCache=ords;
   const paid=ords.filter(o=>o.payment_status==='pagado');
@@ -1438,12 +1459,10 @@ function toast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
+// Respaldo si el realtime se cae: cada 60 s, solo con la app abierta y la pestaña visible.
 setInterval(()=>{
-  if(document.getElementById('appPage').classList.contains('on')){
-    loadDashboard();
-    if(document.getElementById('page-mesas').classList.contains('on'))loadMesas();
-  }
-},30000);
+  if(!document.hidden && document.getElementById('appPage').classList.contains('on')) scheduleRefresh(0);
+},60000);
 
 // ===== RESET =====
 async function resetAllOrders(){
